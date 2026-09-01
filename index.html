@@ -342,7 +342,7 @@
     <!-- INPUT -->
     <section class="panel" id="panel-input">
       <div class="card">
-        <p class="desc"><b>사진으로 일정 불러오기</b><br>회사 유연근무 사이트의 월간 캘린더를 사진으로 찍어 올리면, 날짜별 출근·퇴근 시각을 자동으로 읽어서 반영해요. (클로드 계정 로그인이 되어 있어야 동작해요.)</p>
+        <p class="desc"><b>사진으로 일정 불러오기</b><br>회사 유연근무 사이트의 월간 캘린더를 사진으로 찍어 올리면, 날짜별 출근·퇴근 시각을 자동으로 읽어서 반영해요.</p>
         <label class="file-btn">📷 사진으로 일정 불러오기<input type="file" accept="image/*" id="photoInput"></label>
         <div class="import-status" id="importStatus"></div>
       </div>
@@ -855,28 +855,72 @@
     importStatus.textContent = msg;
     importStatus.classList.toggle("err", !!isErr);
   }
+
+  var IMPORT_PROMPT = "이 이미지는 한 직원의 유연근무(플렉스타임) 월간 출퇴근 예정 캘린더 화면입니다. " +
+    "달력에 표시된 각 날짜의 출근 시작 시각과 퇴근 종료 시각을 읽어 주세요. " +
+    "시간이 표시되지 않은 주말이나 완전 휴무일은 결과에서 제외하세요. " +
+    "오직 아래 형식의 JSON 객체 하나만 답하세요, 다른 설명은 쓰지 마세요:\n" +
+    '{"days":[{"date":"YYYY-MM-DD","start":"HH:MM","end":"HH:MM","note":null}]}';
+
+  // 사진을 적당한 크기의 JPEG(base64)로 줄여서 반환 — 서버 API로 보낼 때 용량을 아끼기 위함.
+  function resizeImageToJpegBase64(file, maxDim){
+    return new Promise(function(resolve, reject){
+      var img = new Image();
+      var url = URL.createObjectURL(file);
+      img.onload = function(){
+        try{
+          var w = img.naturalWidth, h = img.naturalHeight;
+          var scale = Math.min(1, maxDim / Math.max(w, h));
+          var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+          var canvas = document.createElement("canvas");
+          canvas.width = cw; canvas.height = ch;
+          var ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, cw, ch);
+          var dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+          URL.revokeObjectURL(url);
+          resolve(dataUrl.split(",")[1]);
+        }catch(e){ URL.revokeObjectURL(url); reject(e); }
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error("image_decode_failed")); };
+      img.src = url;
+    });
+  }
+
+  // 클로드 아티팩트 환경(window.claude)에서 사진을 분석.
+  async function parseScheduleViaArtifact(file){
+    var sample = await window.claude.use("sample");
+    if(!sample){ var e1=new Error("no_sample"); e1.code="not_granted"; throw e1; }
+    var caps = await sample.limits().catch(function(){ return null; });
+    if(!caps || !caps.images){ var e2=new Error("no_images_cap"); e2.code="not_granted"; throw e2; }
+    var result = await sample.json(IMPORT_PROMPT, { images: file, modelTier: "default" });
+    return (result && result.days) || [];
+  }
+
+  // 일반 배포판(Vercel)에서는 이 앱의 서버(/api/parse-schedule)를 통해 분석.
+  // 서버는 종원님의 Anthropic API 키로 클로드 Vision을 호출해요 — 키는 서버에만 있고 브라우저로 내려오지 않아요.
+  async function parseScheduleViaServer(file){
+    var base64 = await resizeImageToJpegBase64(file, 1600);
+    var resp = await fetch("/api/parse-schedule", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ imageBase64: base64, mediaType: "image/jpeg" })
+    });
+    var data = null;
+    try{ data = await resp.json(); }catch(e){}
+    if(!resp.ok){
+      var code = (data && data.error) || "request_failed";
+      var err = new Error(code); err.code = code; throw err;
+    }
+    return (data && data.days) || [];
+  }
+
   photoInput.addEventListener("change", async function(){
     var file = photoInput.files && photoInput.files[0];
     if(!file) return;
-    if(!window.claude || typeof window.claude.use !== "function"){
-      setImportStatus("이 화면에서는 사진 인식을 쓸 수 없어요. 아래 '기본 근무 패턴'과 '예외 일정'에 직접 입력해 주세요.", true);
-      photoInput.value = ""; return;
-    }
-    setImportStatus("클로드에게 확인 중...");
+    var hasArtifact = !!(window.claude && typeof window.claude.use === "function");
+    setImportStatus(hasArtifact ? "클로드에게 확인 중..." : "일정을 읽는 중... (몇 초 걸려요)");
     try{
-      var sample = await window.claude.use("sample");
-      if(!sample){ setImportStatus("이 화면에서는 사진 인식을 쓸 수 없어요. 직접 입력해 주세요.", true); photoInput.value=""; return; }
-      var caps = await sample.limits().catch(function(){ return null; });
-      if(!caps || !caps.images){ setImportStatus("이 화면에서는 사진을 보낼 수 없어요. 직접 입력해 주세요.", true); photoInput.value=""; return; }
-
-      setImportStatus("일정을 읽는 중... (몇 초 걸려요)");
-      var prompt = "이 이미지는 한 직원의 유연근무(플렉스타임) 월간 출퇴근 예정 캘린더 화면입니다. " +
-        "달력에 표시된 각 날짜의 출근 시작 시각과 퇴근 종료 시각을 읽어 주세요. " +
-        "시간이 표시되지 않은 주말이나 완전 휴무일은 결과에서 제외하세요. " +
-        "오직 아래 형식의 JSON 객체 하나만 답하세요, 다른 설명은 쓰지 마세요:\n" +
-        '{"days":[{"date":"YYYY-MM-DD","start":"HH:MM","end":"HH:MM","note":null}]}';
-      var result = await sample.json(prompt, { images: file, modelTier: "default" });
-      var days = (result && result.days) || [];
+      var days = hasArtifact ? await parseScheduleViaArtifact(file) : await parseScheduleViaServer(file);
       if(!Array.isArray(days) || days.length===0){
         setImportStatus("사진에서 일정을 읽어내지 못했어요. 더 선명한 사진으로 다시 시도해 주세요.", true);
         photoInput.value=""; return;
@@ -895,8 +939,10 @@
       var code = e && e.code;
       if(code==="not_granted") setImportStatus("사진 인식 사용을 허용하지 않으셨어요. 직접 입력해 주세요.", true);
       else if(code==="rate_limited") setImportStatus("지금은 요청이 많아요. 잠시 후 다시 시도해 주세요.", true);
-      else if(code==="invalid_json") setImportStatus("일정을 정확히 읽지 못했어요. 더 선명한 사진으로 다시 시도해 주세요.", true);
-      else if(code==="image_rejected") setImportStatus("이 사진 파일을 읽을 수 없어요. 다른 사진으로 시도해 주세요.", true);
+      else if(code==="invalid_json" || code==="invalid_model_json") setImportStatus("일정을 정확히 읽지 못했어요. 더 선명한 사진으로 다시 시도해 주세요.", true);
+      else if(code==="image_rejected" || code==="image_too_large") setImportStatus("이 사진 파일을 읽을 수 없어요. 다른 사진으로 시도해 주세요.", true);
+      else if(code==="server_not_configured") setImportStatus("사진 인식 서버가 아직 설정되지 않았어요. 직접 입력해 주세요.", true);
+      else if(code==="origin_not_allowed") setImportStatus("이 화면에서는 사진 인식 요청이 허용되지 않았어요. 직접 입력해 주세요.", true);
       else setImportStatus("일정을 불러오는 중 문제가 생겼어요. 직접 입력해 주세요.", true);
     } finally {
       photoInput.value = "";
