@@ -1363,10 +1363,6 @@
     });
   }
   setInterval(tickNotify, 20000);
-  tickNotify();
-  document.addEventListener("visibilitychange", function(){ if(!document.hidden) tickNotify(); });
-  window.addEventListener("focus", tickNotify);
-  window.addEventListener("pageshow", tickNotify);
 
   // ---------- reminder popup (in-app, requires tap to dismiss) ----------
   var reminderModal = document.getElementById("reminderModal");
@@ -1384,6 +1380,14 @@
   document.getElementById("reminderPreviewBtn").addEventListener("click", function(){
     showReminderPopup("in", "출근", "08:00", null);
   });
+
+  // tickNotify()는 showReminderPopup을 호출할 수 있으므로, 그 함수와 관련 DOM 요소들이
+  // 모두 준비된 지금(위 코드 이후)에야 처음 실행/등록해요 — 더 일찍 부르면 아직 정의되지
+  // 않은 요소를 참조하다 오류가 나서 이후의 모든 초기화(탭 전환 포함)가 멈춰버려요.
+  tickNotify();
+  document.addEventListener("visibilitychange", function(){ if(!document.hidden) tickNotify(); });
+  window.addEventListener("focus", tickNotify);
+  window.addEventListener("pageshow", tickNotify);
 
   // ---------- Google Calendar sync ----------
   var GCAL_WD = {sun:"SU",mon:"MO",tue:"TU",wed:"WE",thu:"TH",fri:"FR",sat:"SA"};
