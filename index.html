@@ -831,6 +831,9 @@
   }
   var state = loadState();
   function save(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+  // 예전에 예외로 잔뜩 쌓여있던 일정 중 반복되는 패턴이 있으면, 앱을 열 때마다 한 번씩
+  // 기본 패턴으로 정리해요 (아래 autoTunePatternFromExceptions 정의 참고).
+  autoTunePatternFromExceptions();
 
   // 근무 여부 우선순위: 1) 직접 등록한 예외(휴일에도 근무하는 경우 포함) 2) 공휴일(자동, 입력 불필요, 기본 휴무)
   // 3) 매주 반복되는 기본 패턴. 공휴일에 실제로 근무해야 하면 예외로 등록해서 덮어쓰면 돼요.
@@ -1065,19 +1068,33 @@
         '</div>';
     }).join("");
 
+    // 기본 패턴을 켜거나 시각을 바꾸면, 그 패턴과 이제 겹치게 된 예외 일정은 자동으로
+    // 정리해요(휴무로 등록한 예외는 그대로 둬요).
+    function cleanupExceptionsMatchingPattern(){
+      var removed = 0;
+      Object.keys(state.exceptions).forEach(function(ds){
+        var e = state.exceptions[ds];
+        if(!e || e.off) return;
+        if(matchesBasePattern(ds, e.start, e.end)){ delete state.exceptions[ds]; removed++; }
+      });
+      return removed;
+    }
     patternRows.querySelectorAll(".pattern-row").forEach(function(row){
       var wd = row.dataset.wd;
       row.querySelector('[data-role="on"]').addEventListener("change", function(ev){
         state.pattern[wd].on = ev.target.checked;
-        save(); renderPattern(); renderToday(); renderMonth(); renderNext(); renderWeek();
+        cleanupExceptionsMatchingPattern();
+        save(); renderPattern(); renderExceptions(); renderToday(); renderMonth(); renderNext(); renderWeek();
       });
       row.querySelector('[data-role="start"]').addEventListener("change", function(ev){
         state.pattern[wd].start = ev.target.value;
-        save(); renderToday(); renderMonth(); renderNext(); renderWeek();
+        cleanupExceptionsMatchingPattern();
+        save(); renderExceptions(); renderToday(); renderMonth(); renderNext(); renderWeek();
       });
       row.querySelector('[data-role="end"]').addEventListener("change", function(ev){
         state.pattern[wd].end = ev.target.value;
-        save(); renderToday(); renderMonth(); renderNext(); renderWeek();
+        cleanupExceptionsMatchingPattern();
+        save(); renderExceptions(); renderToday(); renderMonth(); renderNext(); renderWeek();
       });
     });
   }
@@ -1216,6 +1233,47 @@
     return !!(p && p.on && p.start === start && p.end === end);
   }
 
+  // 예외 일정 중 같은 요일에 같은 시각이 2번 이상 반복되면, 그건 "예외"가 아니라 사실
+  // 매주 반복되는 기본 근무 패턴이에요. 그런 요일은 기본 패턴으로 자동 승격시키고(이미
+  // 요일별 패턴을 직접 켜둔 요일은 손대지 않아요), 그 패턴과 일치하게 된 예외는 목록에서
+  // 정리해요. 사진으로 일정을 불러온 직후와, 앱을 열 때마다 한 번씩 실행돼요.
+  function autoTunePatternFromExceptions(){
+    var byWd = {};
+    Object.keys(state.exceptions).forEach(function(ds){
+      var e = state.exceptions[ds];
+      if(!e || e.off || !e.start || !e.end) return;
+      if(holidayNameFor(ds)) return;
+      var wd = WD_KEYS[new Date(ds+"T00:00:00").getDay()];
+      if(state.pattern[wd] && state.pattern[wd].on) return;
+      (byWd[wd] = byWd[wd] || []).push(e.start+"~"+e.end);
+    });
+    var applied = {};
+    Object.keys(byWd).forEach(function(wd){
+      var counts = {};
+      byWd[wd].forEach(function(key){ counts[key] = (counts[key]||0)+1; });
+      var bestKey = null, bestCount = 0;
+      Object.keys(counts).forEach(function(k){ if(counts[k] > bestCount){ bestCount = counts[k]; bestKey = k; } });
+      // 같은 요일에 같은 시각이 최소 2번은 반복돼야 "패턴"으로 인정해요 — 1번뿐이면
+      // 그냥 그 날만의 진짜 예외일 수 있으니까요.
+      if(bestKey && bestCount >= 2){
+        var parts = bestKey.split("~");
+        state.pattern[wd] = { on:true, start:parts[0], end:parts[1] };
+        applied[wd] = { start:parts[0], end:parts[1] };
+      }
+    });
+    var removed = 0;
+    Object.keys(state.exceptions).forEach(function(ds){
+      var e = state.exceptions[ds];
+      if(!e || e.off) return;
+      if(matchesBasePattern(ds, e.start, e.end)){
+        delete state.exceptions[ds];
+        removed++;
+      }
+    });
+    if(Object.keys(applied).length > 0 || removed > 0) save();
+    return { applied: applied, removed: removed };
+  }
+
   async function handlePhotoFile(file){
     if(!file) return;
     var hasArtifact = !!(window.claude && typeof window.claude.use === "function");
@@ -1226,21 +1284,36 @@
         setImportStatus("사진에서 일정을 읽어내지 못했어요. 더 선명한 사진으로 다시 시도해 주세요.", true);
         return;
       }
-      var added = 0, skipped = 0;
+      // 우선 읽어온 날짜를 전부 반영해요 — 어떤 날이 "기본 패턴"이고 어떤 날이 진짜
+      // 예외인지는 아래 autoTunePatternFromExceptions가 요일별로 반복되는 시각을 보고
+      // 판단해요(휴일에 실제 근무한 날은 항상 예외로 남아요).
+      var readCount = 0;
       days.forEach(function(d){
         if(!d || !d.date || !d.start || !d.end) return;
-        if(matchesBasePattern(d.date, d.start, d.end)){ skipped++; return; }
         state.exceptions[d.date] = { start:d.start, end:d.end, note:d.note||null };
-        added++;
+        readCount++;
       });
-      save();
-      renderExceptions(); renderToday(); renderMonth(); renderNext(); renderWeek();
-      if(added===0 && skipped>0){
-        setImportStatus("읽은 "+skipped+"일 모두 기본 근무 패턴과 같아서 예외로 추가하지 않았어요.");
-      } else {
-        setImportStatus(added+"일치 예외 일정을 반영했어요."+(skipped>0 ? " (기본 패턴과 같은 "+skipped+"일은 건너뜀)" : ""));
+      if(readCount===0){
+        setImportStatus("사진에서 일정을 읽어내지 못했어요. 더 선명한 사진으로 다시 시도해 주세요.", true);
+        return;
       }
-      if(added>0) promptGcalSync();
+      var tune = autoTunePatternFromExceptions();
+      save();
+      renderPattern(); renderExceptions(); renderToday(); renderMonth(); renderNext(); renderWeek();
+      var appliedWds = Object.keys(tune.applied);
+      if(appliedWds.length > 0){
+        var wdOrder = ["mon","tue","wed","thu","fri","sat","sun"];
+        var summary = wdOrder.filter(function(wd){ return tune.applied[wd]; }).map(function(wd){
+          var p = tune.applied[wd];
+          return WD_LABEL[wd]+" "+p.start+"~"+p.end;
+        }).join(", ");
+        setImportStatus("반복되는 패턴을 찾아 기본 근무 패턴으로 자동 설정했어요 ("+summary+")."+(tune.removed>0 ? " 그와 겹치는 예외 "+tune.removed+"건은 정리했어요." : ""));
+      } else if(tune.removed > 0){
+        setImportStatus("읽은 "+readCount+"일 중 "+tune.removed+"일은 기본 패턴과 같아서 예외에서 정리했어요.");
+      } else {
+        setImportStatus(readCount+"일치 예외 일정을 반영했어요.");
+      }
+      promptGcalSync();
     }catch(e){
       var code = e && e.code;
       if(code==="not_granted") setImportStatus("사진 인식 사용을 허용하지 않으셨어요. 직접 입력해 주세요.", true);
