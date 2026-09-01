@@ -476,6 +476,8 @@
   .card p.desc{ font-size:0.8rem; color:var(--ink-soft); margin:0 0 12px; line-height:1.55; }
   .file-btn{ display:block; border:1px solid var(--line); border-radius:10px; padding:11px 12px; background:var(--surface-2); color:var(--ink); font-size:0.82rem; font-weight:600; cursor:pointer; text-align:center; }
   .file-btn input{ display:none; }
+  .photo-btn-row{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .photo-btn-row .file-btn{ padding:11px 6px; }
   .import-status{ font-size:0.76rem; color:var(--ink-soft); margin-top:10px; min-height:1.1em; }
   .import-status.err{ color:var(--stamp); }
 
@@ -554,11 +556,18 @@
   .modal-btn.secondary{ background:var(--surface-2); color:var(--ink); }
   .gcal-list-card{ max-width:380px; text-align:left; }
   .gcal-list-card .modal-title{ text-align:center; }
-  .gcal-list{ display:flex; flex-direction:column; gap:8px; margin:14px 0 4px; max-height:48vh; overflow-y:auto; }
-  .gcal-item{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 14px; border-radius:12px; background:var(--surface-2); text-decoration:none; color:var(--ink); }
+  .gcal-toolbar{ display:flex; justify-content:space-between; align-items:center; margin:10px 0 4px; }
+  .gcal-toolbar button{ background:none; border:none; color:var(--accent); font-size:0.76rem; font-weight:700; cursor:pointer; padding:4px 2px; }
+  .gcal-count{ font-size:0.76rem; color:var(--ink-faint); }
+  .gcal-list{ display:flex; flex-direction:column; gap:8px; margin:8px 0 4px; max-height:44vh; overflow-y:auto; }
+  .gcal-item{ display:flex; align-items:center; gap:10px; padding:11px 14px; border-radius:12px; background:var(--surface-2); color:var(--ink); }
+  .gcal-item input[type="checkbox"]{ flex:0 0 auto; width:18px; height:18px; accent-color:var(--accent); }
+  .gcal-item label{ flex:1; cursor:pointer; }
   .gcal-item .gcal-item-label{ font-weight:700; font-size:0.83rem; display:block; }
   .gcal-item .gcal-item-sub{ font-size:0.7rem; color:var(--ink-faint); display:block; margin-top:2px; }
-  .gcal-item .gcal-arrow{ color:var(--accent); font-size:1.15rem; flex:0 0 auto; }
+  .gcal-item .gcal-open{ color:var(--accent); font-size:0.72rem; font-weight:700; text-decoration:none; flex:0 0 auto; padding:4px 6px; }
+  .gcal-download-hint{ font-size:0.76rem; color:var(--ink-soft); margin:12px 0 0; line-height:1.55; }
+  .modal-btn:disabled{ opacity:0.45; cursor:not-allowed; }
 </style>
 
 <div class="app">
@@ -613,8 +622,11 @@
     <!-- INPUT -->
     <section class="panel" id="panel-input">
       <div class="card">
-        <p class="desc"><b>사진으로 일정 불러오기</b><br>회사 유연근무 사이트의 월간 캘린더를 사진으로 찍어 올리면, 날짜별 출근·퇴근 시각을 자동으로 읽어서 반영해요.</p>
-        <label class="file-btn">📷 사진으로 일정 불러오기<input type="file" accept="image/*" id="photoInput"></label>
+        <p class="desc"><b>사진으로 일정 불러오기</b><br>회사 유연근무 사이트의 월간 캘린더를 사진으로 찍거나, 캡처해둔 화면을 올리면 날짜별 출근·퇴근 시각을 자동으로 읽어서 반영해요. 기본 근무 패턴과 같은 날은 건너뛰고, 다른 날만 예외 일정에 추가돼요.</p>
+        <div class="photo-btn-row">
+          <label class="file-btn">📷 카메라로 촬영<input type="file" accept="image/*" capture="environment" id="photoInputCamera"></label>
+          <label class="file-btn">🖼️ 갤러리에서 선택<input type="file" accept="image/*" id="photoInputGallery"></label>
+        </div>
         <div class="import-status" id="importStatus"></div>
       </div>
 
@@ -720,9 +732,18 @@
   <div class="modal-overlay" id="gcalListModal" hidden>
     <div class="modal-card gcal-list-card">
       <h3 class="modal-title">캘린더에 추가</h3>
-      <p class="modal-body">아래 항목을 하나씩 눌러 구글캘린더 앱(또는 웹)에서 저장해 주세요.</p>
+      <p class="modal-body">등록할 알림을 체크한 뒤, 캘린더 파일 하나로 한 번에 내려받으세요. 구글캘린더 웹(PC)의 <b>설정(⚙️) → 가져오기/내보내기 → 가져오기</b>에서 그 파일 하나만 올리면 체크한 알림이 전부 한 번에 등록돼요. (항목 옆 "바로 열기"를 누르면 그 하나만 구글캘린더에서 즉시 열려요.)</p>
+      <div class="gcal-toolbar">
+        <span class="gcal-count" id="gcalCount"></span>
+        <button type="button" id="gcalToggleAllBtn">전체 선택/해제</button>
+      </div>
       <div class="gcal-list" id="gcalList"></div>
-      <button class="modal-btn secondary" id="gcalCloseBtn" type="button">닫기</button>
+      <p class="gcal-download-hint" id="gcalEmptyHint" hidden>등록할 근무 일정이 없어요. 먼저 근무 패턴을 켜주세요.</p>
+      <p class="gcal-download-hint" id="gcalDownloadMsg" hidden></p>
+      <div class="modal-actions">
+        <button class="modal-btn secondary" id="gcalCloseBtn" type="button">닫기</button>
+        <button class="modal-btn" id="gcalDownloadBtn" type="button">선택한 일정 캘린더 파일 다운로드</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1120,7 +1141,8 @@
   });
 
   // ---------- INPUT: photo import ----------
-  var photoInput = document.getElementById("photoInput");
+  var photoInputCamera = document.getElementById("photoInputCamera");
+  var photoInputGallery = document.getElementById("photoInputGallery");
   var importStatus = document.getElementById("importStatus");
   function setImportStatus(msg, isErr){
     importStatus.textContent = msg;
@@ -1185,8 +1207,16 @@
     return (data && data.days) || [];
   }
 
-  photoInput.addEventListener("change", async function(){
-    var file = photoInput.files && photoInput.files[0];
+  // 그 날짜가 "기본 근무 패턴"과 완전히 같은 시각이면(= 굳이 예외로 등록할 필요가 없으면) true.
+  // 공휴일인데 사진에 근무 시각이 있으면 기본 패턴(휴무)과 다르므로 false — 예외로 등록됨.
+  function matchesBasePattern(ds, start, end){
+    if(holidayNameFor(ds)) return false;
+    var wd = WD_KEYS[new Date(ds+"T00:00:00").getDay()];
+    var p = state.pattern[wd];
+    return !!(p && p.on && p.start === start && p.end === end);
+  }
+
+  async function handlePhotoFile(file){
     if(!file) return;
     var hasArtifact = !!(window.claude && typeof window.claude.use === "function");
     setImportStatus(hasArtifact ? "클로드에게 확인 중..." : "일정을 읽는 중... (몇 초 걸려요)");
@@ -1194,17 +1224,22 @@
       var days = hasArtifact ? await parseScheduleViaArtifact(file) : await parseScheduleViaServer(file);
       if(!Array.isArray(days) || days.length===0){
         setImportStatus("사진에서 일정을 읽어내지 못했어요. 더 선명한 사진으로 다시 시도해 주세요.", true);
-        photoInput.value=""; return;
+        return;
       }
-      var added = 0;
+      var added = 0, skipped = 0;
       days.forEach(function(d){
         if(!d || !d.date || !d.start || !d.end) return;
+        if(matchesBasePattern(d.date, d.start, d.end)){ skipped++; return; }
         state.exceptions[d.date] = { start:d.start, end:d.end, note:d.note||null };
         added++;
       });
       save();
       renderExceptions(); renderToday(); renderMonth(); renderNext(); renderWeek();
-      setImportStatus(added+"일치 일정을 예외 목록에 반영했어요.");
+      if(added===0 && skipped>0){
+        setImportStatus("읽은 "+skipped+"일 모두 기본 근무 패턴과 같아서 예외로 추가하지 않았어요.");
+      } else {
+        setImportStatus(added+"일치 예외 일정을 반영했어요."+(skipped>0 ? " (기본 패턴과 같은 "+skipped+"일은 건너뜀)" : ""));
+      }
       if(added>0) promptGcalSync();
     }catch(e){
       var code = e && e.code;
@@ -1215,9 +1250,18 @@
       else if(code==="server_not_configured") setImportStatus("사진 인식 서버가 아직 설정되지 않았어요. 직접 입력해 주세요.", true);
       else if(code==="origin_not_allowed") setImportStatus("이 화면에서는 사진 인식 요청이 허용되지 않았어요. 직접 입력해 주세요.", true);
       else setImportStatus("일정을 불러오는 중 문제가 생겼어요. 직접 입력해 주세요.", true);
-    } finally {
-      photoInput.value = "";
     }
+  }
+
+  photoInputCamera.addEventListener("change", async function(){
+    var file = photoInputCamera.files && photoInputCamera.files[0];
+    await handlePhotoFile(file);
+    photoInputCamera.value = "";
+  });
+  photoInputGallery.addEventListener("change", async function(){
+    var file = photoInputGallery.files && photoInputGallery.files[0];
+    await handlePhotoFile(file);
+    photoInputGallery.value = "";
   });
 
   // ---------- SETTINGS ----------
@@ -1266,7 +1310,7 @@
     var text = (ym+" 근무 일정 (알림 "+offset+"분 전)\n")+lines.join("\n");
     try{
       await navigator.clipboard.writeText(text);
-      copyStatus.textContent = "복사했어요. Claude 채팅에 붙여넣고 캘린더 파일을 요청하세요.";
+      copyStatus.textContent = "복사했어요. 메모장이나 메신저 등에 붙여넣어 보관·공유할 수 있어요.";
       copyStatus.classList.add("ok");
     }catch(e){
       copyStatus.textContent = "복사에 실패했어요. 이 브라우저에서는 지원하지 않을 수 있어요.";
@@ -1282,6 +1326,11 @@
   });
 
   // ---------- local best-effort notifications (only while tab open) ----------
+  // 주의: 모바일 브라우저는 화면이 꺼지거나 탭이 백그라운드로 가면 이 타이머 자체가 멈춰요 —
+  // 이건 이 앱만의 문제가 아니라 브라우저 공통 제약이에요(구글캘린더 등록을 권장하는 이유).
+  // 그래도 타이머가 멈췄다가 다시 살아났을 때(화면을 다시 켜거나 탭으로 돌아왔을 때) 놓친
+  // 알림을 최대한 바로 잡아주기 위해: 1) 판정 창을 "그 시각 이후 계속"으로 넓히고,
+  // 2) 탭이 다시 보이거나 포커스를 받는 순간 즉시 한 번 더 확인해요.
   var firedToday = {};
   function tickNotify(){
     var t = todayStr();
@@ -1297,7 +1346,11 @@
       if(firedToday[key]) return;
       var evMin = minutesOf(time) - offset;
       var nowMin = now.getHours()*60+now.getMinutes();
-      if(nowMin >= evMin && nowMin <= evMin+2){
+      // 원래는 evMin~evMin+2분의 좁은 창만 봤는데, 화면이 잠겨 타이머가 멈춰있다가
+      // 늦게 재개되면 그 창을 이미 지나쳐 놓치는 경우가 많았어요. evMin 이후라면
+      // (아직 체크 전이고, 출근 시각을 한참 넘기지 않은 한) 뒤늦게라도 알려주도록 넓혔어요.
+      var lateLimitMin = minutesOf(time) + 120; // 기준 시각(출근/퇴근) 2시간 이후는 뒤늦은 알림도 의미가 없어 건너뜀
+      if(nowMin >= evMin && nowMin <= lateLimitMin){
         firedToday[key] = true;
         if("Notification" in window && Notification.permission === "granted"){
           try{
@@ -1310,6 +1363,10 @@
     });
   }
   setInterval(tickNotify, 20000);
+  tickNotify();
+  document.addEventListener("visibilitychange", function(){ if(!document.hidden) tickNotify(); });
+  window.addEventListener("focus", tickNotify);
+  window.addEventListener("pageshow", tickNotify);
 
   // ---------- reminder popup (in-app, requires tap to dismiss) ----------
   var reminderModal = document.getElementById("reminderModal");
@@ -1360,6 +1417,60 @@
     }
     return "https://calendar.google.com/calendar/render?" + params.join("&");
   }
+  // ---- 캘린더 파일(.ics) 생성 — 체크한 항목을 표준 iCalendar 하나로 묶어서
+  // 구글캘린더(또는 다른 캘린더 앱)의 "가져오기"에 한 번만 올리면 전부 한 번에 등록되게 해요.
+  function icsEscape(s){
+    return String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\n/g,"\\n");
+  }
+  function icsLocalStamp(y, mo, d, hh, mi){
+    return y+pad2(mo)+pad2(d)+"T"+pad2(hh)+pad2(mi)+"00";
+  }
+  function buildIcsFile(items){
+    var now = new Date();
+    var dtstamp = now.getUTCFullYear()+pad2(now.getUTCMonth()+1)+pad2(now.getUTCDate())+"T"+pad2(now.getUTCHours())+pad2(now.getUTCMinutes())+pad2(now.getUTCSeconds())+"Z";
+    var lines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//OnOffMate//Schedule Export//KO",
+      "CALSCALE:GREGORIAN",
+      "BEGIN:VTIMEZONE",
+      "TZID:Asia/Seoul",
+      "BEGIN:STANDARD",
+      "DTSTART:19700101T000000",
+      "TZOFFSETFROM:+0900",
+      "TZOFFSETTO:+0900",
+      "TZNAME:KST",
+      "END:STANDARD",
+      "END:VTIMEZONE"
+    ];
+    items.forEach(function(it, i){
+      lines.push("BEGIN:VEVENT");
+      lines.push("UID:onoffmate-"+Date.now()+"-"+i+"@onoffmate");
+      lines.push("DTSTAMP:"+dtstamp);
+      lines.push("DTSTART;TZID=Asia/Seoul:"+it.dtstart);
+      lines.push("DTEND;TZID=Asia/Seoul:"+it.dtend);
+      if(it.rrule) lines.push("RRULE:"+it.rrule);
+      lines.push("SUMMARY:"+icsEscape(it.title));
+      lines.push("DESCRIPTION:"+icsEscape(it.details));
+      lines.push("END:VEVENT");
+    });
+    lines.push("END:VCALENDAR");
+    return lines.join("\r\n");
+  }
+  function downloadIcsFile(items){
+    var text = buildIcsFile(items);
+    var blob = new Blob([text], { type: "text/calendar;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    var ymd = todayStr().replace(/-/g,"");
+    a.href = url;
+    a.download = "onoffmate-schedule-"+ymd+".ics";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  }
+
   function buildGcalPlan(){
     var offset = state.settings.reminderOffsetMin;
     var items = [];
@@ -1380,10 +1491,17 @@
         var title = "⏰ "+label+" 체크 알림";
         var details = "회사 유연근무 사이트에서 ["+label+"] 버튼을 눌러주세요. (기준 시각 "+hhmm+", "+offset+"분 전 알림)";
         var url = buildGcalUrl(title, details, anchor, alert.h, alert.m, 10, byday);
+        var y = anchor.getFullYear(), mo = anchor.getMonth()+1, d = anchor.getDate();
+        var endTotal = alert.h*60+alert.m+10;
         items.push({
           label: label+" 알림 · "+wdLabels+" "+hhmm,
           sub: "매주 반복 · 알림 "+pad2(alert.h)+":"+pad2(alert.m),
-          url: url
+          url: url,
+          title: title,
+          details: details,
+          dtstart: icsLocalStamp(y, mo, d, alert.h, alert.m),
+          dtend: icsLocalStamp(y, mo, d, Math.floor((endTotal%1440)/60), endTotal%60),
+          rrule: "FREQ=WEEKLY;BYDAY="+byday.join(",")
         });
       });
     }
@@ -1404,10 +1522,17 @@
         var title = "⏰ "+dateLabel+" "+label+" 체크 알림"+(e.note?" ("+e.note+")":"");
         var details = "회사 유연근무 사이트에서 ["+label+"] 버튼을 눌러주세요. (기준 시각 "+hhmm+", "+offset+"분 전 알림)";
         var url = buildGcalUrl(title, details, d, alert.h, alert.m, 10, null);
+        var y = d.getFullYear(), mo = d.getMonth()+1, dd = d.getDate();
+        var endTotal = alert.h*60+alert.m+10;
         items.push({
           label: dateLabel+" "+label+(e.note?" · "+e.note:""),
           sub: "1회성 · 알림 "+pad2(alert.h)+":"+pad2(alert.m),
-          url: url
+          url: url,
+          title: title,
+          details: details,
+          dtstart: icsLocalStamp(y, mo, dd, alert.h, alert.m),
+          dtend: icsLocalStamp(y, mo, dd, Math.floor((endTotal%1440)/60), endTotal%60),
+          rrule: null
         });
       });
     });
@@ -1416,22 +1541,74 @@
   var gcalConfirmModal = document.getElementById("gcalConfirmModal");
   var gcalListModal = document.getElementById("gcalListModal");
   var gcalList = document.getElementById("gcalList");
+  var gcalCount = document.getElementById("gcalCount");
+  var gcalEmptyHint = document.getElementById("gcalEmptyHint");
+  var gcalDownloadBtn = document.getElementById("gcalDownloadBtn");
+  var gcalToggleAllBtn = document.getElementById("gcalToggleAllBtn");
+  var gcalDownloadMsg = document.getElementById("gcalDownloadMsg");
+  var gcalItems = [];
+
   function promptGcalSync(){ gcalConfirmModal.hidden = false; }
   document.getElementById("gcalNoBtn").addEventListener("click", function(){ gcalConfirmModal.hidden = true; });
+
+  function renderGcalCount(){
+    var checks = gcalList.querySelectorAll(".gcal-check");
+    var checked = 0;
+    checks.forEach(function(c){ if(c.checked) checked++; });
+    gcalCount.textContent = checked+" / "+checks.length+"건 선택";
+    gcalDownloadBtn.disabled = checked===0;
+  }
+
   document.getElementById("gcalYesBtn").addEventListener("click", function(){
     gcalConfirmModal.hidden = true;
-    var items = buildGcalPlan();
-    if(items.length===0){
-      gcalList.innerHTML = '<div class="empty-hint">등록할 근무 일정이 없어요. 먼저 근무 패턴을 켜주세요.</div>';
+    gcalDownloadMsg.hidden = true;
+    gcalItems = buildGcalPlan();
+    if(gcalItems.length===0){
+      gcalList.innerHTML = "";
+      gcalEmptyHint.hidden = false;
+      gcalCount.textContent = "";
+      gcalDownloadBtn.disabled = true;
     } else {
-      gcalList.innerHTML = items.map(function(it){
-        return '<a class="gcal-item" href="'+it.url+'" target="_blank" rel="noopener">' +
-          '<span><span class="gcal-item-label">'+it.label+'</span><span class="gcal-item-sub">'+it.sub+'</span></span>' +
-          '<span class="gcal-arrow">›</span></a>';
+      gcalEmptyHint.hidden = true;
+      gcalList.innerHTML = gcalItems.map(function(it, idx){
+        return '<div class="gcal-item">' +
+          '<input type="checkbox" class="gcal-check" id="gcalCheck'+idx+'" data-idx="'+idx+'" checked>' +
+          '<label for="gcalCheck'+idx+'"><span class="gcal-item-label">'+it.label+'</span><span class="gcal-item-sub">'+it.sub+'</span></label>' +
+          '<a class="gcal-open" href="'+it.url+'" target="_blank" rel="noopener">바로 열기</a>' +
+          '</div>';
       }).join("");
+      renderGcalCount();
     }
     gcalListModal.hidden = false;
   });
+
+  gcalList.addEventListener("change", function(ev){
+    if(ev.target && ev.target.classList.contains("gcal-check")) renderGcalCount();
+  });
+
+  gcalToggleAllBtn.addEventListener("click", function(){
+    var checks = gcalList.querySelectorAll(".gcal-check");
+    var allChecked = true;
+    checks.forEach(function(c){ if(!c.checked) allChecked = false; });
+    checks.forEach(function(c){ c.checked = !allChecked; });
+    renderGcalCount();
+  });
+
+  gcalDownloadBtn.addEventListener("click", function(){
+    var checks = gcalList.querySelectorAll(".gcal-check");
+    var selected = [];
+    checks.forEach(function(c){ if(c.checked) selected.push(gcalItems[parseInt(c.dataset.idx,10)]); });
+    if(selected.length===0) return;
+    // 클로드 아티팩트 미리보기 안에서는 브라우저 파일 다운로드가 막혀 있어서 이 버튼이 동작하지 않아요.
+    // 실제 배포된 사이트(주소창이 on-off-mate.vercel.app 등인 화면)에서는 정상 동작해요.
+    if(window.claude && typeof window.claude.use === "function"){
+      gcalDownloadMsg.textContent = "클로드 미리보기 화면에서는 파일 다운로드가 지원되지 않아요. 배포된 앱 주소에서 다시 시도하거나, 지금은 항목 옆 \"바로 열기\"로 하나씩 등록해 주세요.";
+      gcalDownloadMsg.hidden = false;
+      return;
+    }
+    downloadIcsFile(selected);
+  });
+
   document.getElementById("gcalCloseBtn").addEventListener("click", function(){ gcalListModal.hidden = true; });
   document.getElementById("gcalManualBtn").addEventListener("click", function(){ promptGcalSync(); });
 
