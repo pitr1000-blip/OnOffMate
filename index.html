@@ -474,21 +474,19 @@
   };
   function holidayNameFor(ds){ return HOLIDAYS_KR[ds] || null; }
 
+  // 배포 기본값 — 아무 근무일정도 미리 채워두지 않음.
+  // 사용자가 "입력" 탭에서 사진을 올리거나 패턴을 직접 켜는 순간부터 일정이 생기기 시작함.
   var DEFAULT_STATE = {
     pattern: {
       sun:{on:false,start:"09:00",end:"18:00"},
-      mon:{on:true, start:"08:00",end:"18:00"},
-      tue:{on:true, start:"08:00",end:"18:00"},
-      wed:{on:true, start:"08:00",end:"18:00"},
-      thu:{on:true, start:"08:00",end:"18:00"},
-      fri:{on:true, start:"08:00",end:"12:30"},
+      mon:{on:false,start:"09:00",end:"18:00"},
+      tue:{on:false,start:"09:00",end:"18:00"},
+      wed:{on:false,start:"09:00",end:"18:00"},
+      thu:{on:false,start:"09:00",end:"18:00"},
+      fri:{on:false,start:"09:00",end:"18:00"},
       sat:{on:false,start:"09:00",end:"18:00"}
     },
-    exceptions: {
-      "2026-09-23": {start:"08:00", end:"15:00", note:"단축"},
-      "2026-09-24": {start:"09:00", end:"18:00", note:"추석1"},
-      "2026-09-25": {start:"09:00", end:"18:00", note:"추석2"}
-    },
+    exceptions: {},
     stamps: {},
     settings: { reminderOffsetMin: 10 },
     meta: { firstUseDate: null } // 채워지는 시점: 최초 로드 시 오늘 날짜로 고정
