@@ -1546,6 +1546,7 @@
       lines.push("DTSTART;TZID=Asia/Seoul:"+it.dtstart);
       lines.push("DTEND;TZID=Asia/Seoul:"+it.dtend);
       if(it.rrule) lines.push("RRULE:"+it.rrule);
+      if(it.exdates && it.exdates.length) lines.push("EXDATE;TZID=Asia/Seoul:"+it.exdates.join(","));
       lines.push("SUMMARY:"+icsEscape(it.title));
       lines.push("DESCRIPTION:"+icsEscape(it.details));
       lines.push("END:VEVENT");
@@ -1570,6 +1571,7 @@
   function buildGcalPlan(){
     var offset = state.settings.reminderOffsetMin;
     var items = [];
+    var t = todayStr();
     var inGroups = {}, outGroups = {};
     WD_KEYS.forEach(function(k){
       var p = state.pattern[k];
@@ -1589,22 +1591,33 @@
         var url = buildGcalUrl(title, details, anchor, alert.h, alert.m, 10, byday);
         var y = anchor.getFullYear(), mo = anchor.getMonth()+1, d = anchor.getDate();
         var endTotal = alert.h*60+alert.m+10;
+        // 예외 일정(휴무 포함)으로 등록된 날짜는 기본 패턴의 매주 반복에서 제외해요 —
+        // 그 날은 대신 아래 "1회성" 예외 일정 쪽 알림(또는 휴무면 알림 없음)이 적용돼요.
+        // 그래야 같은 날에 기본 패턴 알림과 예외 알림이 겹쳐서 두 번 뜨는 걸 막을 수 있어요.
+        var exDates = [];
+        Object.keys(state.exceptions).forEach(function(ds){
+          if(ds < t) return;
+          var wd = WD_KEYS[new Date(ds+"T00:00:00").getDay()];
+          if(days.indexOf(wd) === -1) return;
+          var ed = new Date(ds+"T00:00:00");
+          exDates.push(icsLocalStamp(ed.getFullYear(), ed.getMonth()+1, ed.getDate(), alert.h, alert.m));
+        });
         items.push({
           label: label+" 알림 · "+wdLabels+" "+hhmm,
-          sub: "매주 반복 · 알림 "+pad2(alert.h)+":"+pad2(alert.m),
+          sub: "매주 반복 · 알림 "+pad2(alert.h)+":"+pad2(alert.m) + (exDates.length>0 ? " · 예외 "+exDates.length+"일 제외" : ""),
           url: url,
           title: title,
           details: details,
           dtstart: icsLocalStamp(y, mo, d, alert.h, alert.m),
           dtend: icsLocalStamp(y, mo, d, Math.floor((endTotal%1440)/60), endTotal%60),
-          rrule: "FREQ=WEEKLY;BYDAY="+byday.join(",")
+          rrule: "FREQ=WEEKLY;BYDAY="+byday.join(","),
+          exdates: exDates
         });
       });
     }
     pushGroup(inGroups, "출근");
     pushGroup(outGroups, "퇴근");
 
-    var t = todayStr();
     Object.keys(state.exceptions).sort().forEach(function(ds){
       if(ds < t) return;
       var e = state.exceptions[ds];
