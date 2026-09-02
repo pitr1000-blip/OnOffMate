@@ -521,7 +521,7 @@
   .offset-btn{ flex:1; border:1px solid var(--line); background:var(--surface-2); color:var(--ink); border-radius:9px; padding:8px 0; font-size:0.8rem; cursor:pointer; font-variant-numeric:tabular-nums; }
   .offset-btn.active{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:600; }
   .hint{ font-size:0.74rem; color:var(--ink-faint); line-height:1.6; margin-top:10px; }
-  .row-btn{ width:100%; border:1px solid var(--line); background:var(--surface-2); color:var(--ink); border-radius:10px; padding:10px; font-size:0.82rem; font-weight:600; cursor:pointer; margin-top:6px; }
+  .row-btn{ display:block; box-sizing:border-box; width:100%; border:1px solid var(--line); background:var(--surface-2); color:var(--ink); border-radius:10px; padding:10px; font-size:0.82rem; font-weight:600; cursor:pointer; margin-top:6px; text-align:center; text-decoration:none; }
   .row-btn.danger{ color:var(--stamp); }
   .status-line{ font-size:0.76rem; color:var(--ink-soft); margin-top:8px; }
   .status-line.ok{ color:var(--stamp); }
@@ -676,6 +676,7 @@
         <button class="row-btn" id="reminderPreviewBtn" type="button">지금 알림 팝업 미리보기</button>
         <p class="hint">이 화면(탭)을 열어 둔 동안에는 위 팝업이 정확히 떠요. 하지만 폰이 잠겨 있거나 앱이 완전히 꺼져 있을 땐 웹 알림은 어떤 웹앱이든 신뢰할 수 없어요(브라우저 자체의 제약). 그럴 때도 정확히 울리게 하려면 아래 버튼으로 폰 기본 캘린더 앱에 반복 알림 일정을 등록하세요.</p>
         <button class="row-btn" id="gcalManualBtn" type="button">📅 지금 구글캘린더에 반영하기</button>
+        <a class="row-btn" href="https://calendar.google.com" target="_blank" rel="noopener">🔗 구글캘린더 웹으로 이동 (calendar.google.com)</a>
       </div>
 
       <div class="section-title"><h2>데이터</h2></div>
