@@ -738,6 +738,7 @@
         <button type="button" id="gcalToggleAllBtn">전체 선택/해제</button>
       </div>
       <div class="gcal-list" id="gcalList"></div>
+      <p class="gcal-download-hint">⚠️ 이전에 이미 이 파일(또는 예전 버전)을 구글캘린더에 가져오기 한 적이 있다면, 다시 가져오기 전에 구글캘린더에서 기존 "○○ 체크 알림" 일정들을 먼저 지워주세요. 안 그러면 같은 알림이 중복으로 등록될 수 있어요.</p>
       <p class="gcal-download-hint" id="gcalEmptyHint" hidden>등록할 근무 일정이 없어요. 먼저 근무 패턴을 켜주세요.</p>
       <p class="gcal-download-hint" id="gcalDownloadMsg" hidden></p>
       <div class="modal-actions">
@@ -1485,6 +1486,7 @@
 
   // ---------- Google Calendar sync ----------
   var GCAL_WD = {sun:"SU",mon:"MO",tue:"TU",wed:"WE",thu:"TH",fri:"FR",sat:"SA"};
+  function gcalLabelSlug(label){ return label === "출근" ? "checkin" : "checkout"; }
   function addMinutesToHHMM(hhmm, deltaMin){
     var mins = ((minutesOf(hhmm) + deltaMin) % 1440 + 1440) % 1440;
     return { h: Math.floor(mins/60), m: mins % 60 };
@@ -1543,7 +1545,10 @@
     ];
     items.forEach(function(it, i){
       lines.push("BEGIN:VEVENT");
-      lines.push("UID:onoffmate-"+Date.now()+"-"+i+"@onoffmate");
+      // 일정 내용이 같으면 언제 다시 다운로드해도 항상 같은 UID가 나오게 해요.
+      // (그래야 다시 가져오기 했을 때 구글캘린더가 새 일정으로 중복 추가하지 않고
+      //  기존 일정을 업데이트할 가능성이 높아져요.)
+      lines.push("UID:"+(it.uid || ("onoffmate-"+Date.now()+"-"+i))+"@onoffmate");
       lines.push("DTSTAMP:"+dtstamp);
       lines.push("DTSTART;TZID=Asia/Seoul:"+it.dtstart);
       lines.push("DTEND;TZID=Asia/Seoul:"+it.dtend);
@@ -1613,7 +1618,8 @@
           dtstart: icsLocalStamp(y, mo, d, alert.h, alert.m),
           dtend: icsLocalStamp(y, mo, d, Math.floor((endTotal%1440)/60), endTotal%60),
           rrule: "FREQ=WEEKLY;BYDAY="+byday.join(","),
-          exdates: exDates
+          exdates: exDates,
+          uid: "onoffmate-recur-"+gcalLabelSlug(label)+"-"+byday.join("")+"-"+hhmm.replace(":","")
         });
       });
     }
@@ -1643,7 +1649,8 @@
           details: details,
           dtstart: icsLocalStamp(y, mo, dd, alert.h, alert.m),
           dtend: icsLocalStamp(y, mo, dd, Math.floor((endTotal%1440)/60), endTotal%60),
-          rrule: null
+          rrule: null,
+          uid: "onoffmate-once-"+ds+"-"+gcalLabelSlug(label)
         });
       });
     });
