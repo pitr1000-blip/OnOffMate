@@ -676,8 +676,6 @@
         <button class="row-btn" id="reminderPreviewBtn" type="button">지금 알림 팝업 미리보기</button>
         <p class="hint">이 화면(탭)을 열어 둔 동안에는 위 팝업이 정확히 떠요. 하지만 폰이 잠겨 있거나 앱이 완전히 꺼져 있을 땐 웹 알림은 어떤 웹앱이든 신뢰할 수 없어요(브라우저 자체의 제약). 그럴 때도 정확히 울리게 하려면 아래 버튼으로 폰 기본 캘린더 앱에 반복 알림 일정을 등록하세요.</p>
         <button class="row-btn" id="gcalManualBtn" type="button">📅 지금 구글캘린더에 반영하기</button>
-        <button class="row-btn" id="copySummaryBtn" type="button">이번 달 알림 요약 복사하기</button>
-        <div class="status-line" id="copyStatus"></div>
       </div>
 
       <div class="section-title"><h2>데이터</h2></div>
@@ -938,14 +936,6 @@
       '<p class="sub">'+offset+'분 전 알림 예정' + (found.sched.note ? ' · '+found.sched.note : '') + '</p>';
   }
 
-
-  function monthDates(ym){
-    var y = parseInt(ym.slice(0,4),10), m = parseInt(ym.slice(5,7),10);
-    var n = new Date(y, m, 0).getDate();
-    var out = [];
-    for(var d=1; d<=n; d++) out.push(y+"-"+pad2(m)+"-"+pad2(d));
-    return out;
-  }
 
   // ---------- SCHEDULE (근무일정, 달력형) ----------
   var monthLabel = document.getElementById("monthLabel");
@@ -1370,27 +1360,6 @@
     Notification.requestPermission().then(function(){ renderNotifStatus(); });
   });
 
-  var copySummaryBtn = document.getElementById("copySummaryBtn");
-  var copyStatus = document.getElementById("copyStatus");
-  copySummaryBtn.addEventListener("click", async function(){
-    var ym = todayStr().slice(0,7);
-    var keys = monthDates(ym).filter(function(ds){ return !!scheduleFor(ds); });
-    var offset = state.settings.reminderOffsetMin;
-    var lines = keys.map(function(ds){
-      var sched = scheduleFor(ds);
-      return ds+" 출근 "+sched.start+" / 퇴근 "+sched.end+(sched.note?" ("+sched.note+")":"");
-    });
-    var text = (ym+" 근무 일정 (알림 "+offset+"분 전)\n")+lines.join("\n");
-    try{
-      await navigator.clipboard.writeText(text);
-      copyStatus.textContent = "복사했어요. 메모장이나 메신저 등에 붙여넣어 보관·공유할 수 있어요.";
-      copyStatus.classList.add("ok");
-    }catch(e){
-      copyStatus.textContent = "복사에 실패했어요. 이 브라우저에서는 지원하지 않을 수 있어요.";
-      copyStatus.classList.remove("ok");
-    }
-  });
-
   document.getElementById("resetBtn").addEventListener("click", function(){
     if(!confirm("정말 모든 일정과 체크 기록을 초기화할까요?")) return;
     state = JSON.parse(JSON.stringify(DEFAULT_STATE));
@@ -1427,7 +1396,9 @@
         firedToday[key] = true;
         if("Notification" in window && Notification.permission === "granted"){
           try{
-            var n = new Notification("⏰ "+label+" 체크 시간이에요", { body: "회사 유연근무 사이트에서 ["+label+"] 버튼을 눌러주세요." });
+            // vibrate 옵션은 안드로이드에서 시스템 알림이 뜰 때 폰의 알림 채널 설정(무음/진동/소리)에
+            // 맞춰 진동을 함께 울려줘요.
+            var n = new Notification("⏰ "+label+" 체크 시간이에요", { body: "회사 유연근무 사이트에서 ["+label+"] 버튼을 눌러주세요.", vibrate: [200,100,200] });
             n.onclick = function(){ window.focus(); };
           }catch(e){}
         }
@@ -1436,6 +1407,52 @@
     });
   }
   setInterval(tickNotify, 20000);
+
+  // ---------- 알림 소리 / 진동 ----------
+  // 브라우저 정책상 사용자가 화면을 한 번이라도 탭해야 소리 재생이 허용돼요. 그래서 화면
+  // 아무 곳이나 처음 터치하는 순간 오디오를 미리 준비(unlock)해둬요 — 그래야 나중에 타이머로
+  // 자동 실행되는 알림에서도 소리가 막히지 않고 재생돼요.
+  var alertAudioCtx = null;
+  function ensureAudioCtx(){
+    if(alertAudioCtx) return alertAudioCtx;
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    if(!Ctx) return null;
+    try{ alertAudioCtx = new Ctx(); }catch(e){ return null; }
+    return alertAudioCtx;
+  }
+  document.addEventListener("pointerdown", function unlockAudioOnce(){
+    var ctx = ensureAudioCtx();
+    if(ctx && ctx.state === "suspended") ctx.resume().catch(function(){});
+    document.removeEventListener("pointerdown", unlockAudioOnce);
+  }, { once:true });
+
+  // 안내 알림음(짧은 삐- 삐- 두 번). 폰의 미디어 볼륨을 따라가고, 무음 스위치가 있는
+  // 아이폰에서는 무음 모드일 때 자동으로 소리가 나지 않아요.
+  function playAlertSound(){
+    var ctx = ensureAudioCtx();
+    if(!ctx) return;
+    try{
+      if(ctx.state === "suspended") ctx.resume().catch(function(){});
+      var now = ctx.currentTime;
+      [0, 0.32].forEach(function(offset){
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.0001, now+offset);
+        gain.gain.exponentialRampToValueAtTime(0.35, now+offset+0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now+offset+0.28);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(now+offset);
+        osc.stop(now+offset+0.3);
+      });
+    }catch(e){}
+  }
+  // 진동. navigator.vibrate는 안드로이드 브라우저에서 지원돼요(아이폰 사파리는 지원 안 함) —
+  // 폰이 무음/진동 모드든 상관없이 이 API 자체가 직접 진동을 울려요.
+  function vibrateAlert(){
+    try{ if(navigator.vibrate) navigator.vibrate([200,100,200,100,200]); }catch(e){}
+  }
 
   // ---------- reminder popup (in-app, requires tap to dismiss) ----------
   var reminderModal = document.getElementById("reminderModal");
@@ -1448,6 +1465,8 @@
     reminderBody.textContent = "회사 유연근무 사이트에서 ["+label+"] 버튼을 눌러주세요." + (note ? " ("+note+")" : "");
     reminderTime.textContent = "예정 시간 "+time;
     reminderModal.hidden = false;
+    playAlertSound();
+    vibrateAlert();
   }
   reminderAckBtn.addEventListener("click", function(){ reminderModal.hidden = true; });
   document.getElementById("reminderPreviewBtn").addEventListener("click", function(){
