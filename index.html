@@ -675,7 +675,7 @@
         <div class="status-line" id="notifStatus"></div>
         <button class="row-btn" id="reminderPreviewBtn" type="button">지금 알림 팝업 미리보기</button>
         <p class="hint">이 화면(탭)을 열어 둔 동안에는 위 팝업이 정확히 떠요. 하지만 폰이 잠겨 있거나 앱이 완전히 꺼져 있을 땐 웹 알림은 어떤 웹앱이든 신뢰할 수 없어요(브라우저 자체의 제약). 그럴 때도 정확히 울리게 하려면 아래 버튼으로 폰 기본 캘린더 앱에 반복 알림 일정을 등록하세요.</p>
-        <button class="row-btn" id="gcalManualBtn" type="button">📅 지금 구글캘린더에 반영하기</button>
+        <button class="row-btn" id="gcalManualBtn" type="button">📅 근무일정 구글캘린더 반영 파일 생성/다운로드</button>
         <a class="row-btn" href="https://calendar.google.com" target="_blank" rel="noopener">🔗 구글캘린더 웹으로 이동 (calendar.google.com)</a>
         <p class="hint">폰에서 위 링크를 열면 오래된 "기본 모바일" 화면(하단에 "©2010 Google"이 보이는 화면)이 뜰 수 있어요. 이 화면에는 파일 업로드 메뉴가 없어요. 화면 맨 아래 <b>"데스크톱"</b> 링크를 눌러 최신 화면으로 바꾸면 설정(⚙️) → 가져오기/내보내기 메뉴가 나타나요. 그래도 안 보이면 PC(컴퓨터)로 접속해서 가져오는 걸 추천해요. 폰만 쓰고 있다면 파일 업로드 대신, 캘린더 추가 목록에서 항목 옆 "바로 열기"로 하나씩 등록하는 방법이 더 쉬워요.</p>
       </div>
@@ -1500,6 +1500,17 @@
     d.setDate(d.getDate()+diff);
     return d;
   }
+  // 반복 일정(RRULE)의 시작일은 그룹에 속한 요일 중 "가장 빨리 다가오는 날"로 잡아야 해요.
+  // 항상 첫 번째 요일(예: 월요일) 기준으로만 잡으면, 주 중간(수요일 등)에 캘린더 파일을
+  // 만들 때 이번 주 나머지 요일(수·목·금)이 통째로 빠지고 다음 주 월요일부터 시작돼버려요.
+  function earliestAnchorForDays(days){
+    var best = null;
+    days.forEach(function(k){
+      var cand = nextDateForWeekday(WD_KEYS.indexOf(k));
+      if(!best || cand.getTime() < best.getTime()) best = cand;
+    });
+    return best;
+  }
   function buildGcalUrl(title, details, anchorDate, hh, mi, durMin, bydayList){
     var y = anchorDate.getFullYear(), mo = anchorDate.getMonth()+1, d = anchorDate.getDate();
     var start = gcalStamp(y, mo, d, hh, mi);
@@ -1591,7 +1602,7 @@
         var days = groups[hhmm];
         var byday = days.map(function(k){ return GCAL_WD[k]; });
         var alert = addMinutesToHHMM(hhmm, -offset);
-        var anchor = nextDateForWeekday(WD_KEYS.indexOf(days[0]));
+        var anchor = earliestAnchorForDays(days);
         var wdLabels = days.map(function(k){ return WD_LABEL[k]; }).join("");
         var title = "⏰ "+label+" 체크 알림";
         var details = "회사 유연근무 사이트에서 ["+label+"] 버튼을 눌러주세요. (기준 시각 "+hhmm+", "+offset+"분 전 알림)";
