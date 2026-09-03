@@ -522,9 +522,14 @@
   .offset-btn.active{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:600; }
   .hint{ font-size:0.74rem; color:var(--ink-faint); line-height:1.6; margin-top:10px; }
   .row-btn{ display:block; box-sizing:border-box; width:100%; border:1px solid var(--line); background:var(--surface-2); color:var(--ink); border-radius:10px; padding:10px; font-size:0.82rem; font-weight:600; cursor:pointer; margin-top:6px; text-align:center; text-decoration:none; }
+  .row-btn.primary{ background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
   .row-btn.danger{ color:var(--stamp); }
   .status-line{ font-size:0.76rem; color:var(--ink-soft); margin-top:8px; }
   .status-line.ok{ color:var(--stamp); }
+  .method-badge{ display:inline-block; font-size:0.7rem; font-weight:700; padding:3px 9px; border-radius:999px; margin-bottom:10px; }
+  .method-badge.recommend{ background:var(--accent-soft); color:var(--accent); }
+  .method-badge.backup{ background:var(--surface-2); color:var(--ink-faint); }
+  .method-desc{ font-size:0.8rem; color:var(--ink-soft); line-height:1.6; margin:0 0 4px; }
 
   /* tab bar */
   nav.tabbar{
@@ -671,13 +676,22 @@
             <button class="offset-btn" data-min="30" type="button">30분</button>
           </div>
         </div>
+      </div>
+
+      <div class="card">
+        <span class="method-badge recommend">✅ 추천 · 폰이 잠겨 있거나 다른 앱을 써도 울려요</span>
+        <p class="method-desc">근무 일정을 폰 기본 캘린더(구글캘린더 등)에 반복 알림으로 등록해요. 이 앱을 열어두지 않아도, 다른 일을 하고 있어도 폰 OS가 직접 알림을 울려줘요 — 가장 확실한 방법이에요.</p>
+        <button class="row-btn primary" id="gcalManualBtn" type="button">📅 근무일정 구글캘린더 반영 파일 생성/다운로드</button>
+        <a class="row-btn" href="https://calendar.google.com" target="_blank" rel="noopener">🔗 구글캘린더 웹으로 이동 (calendar.google.com)</a>
+        <p class="hint">폰에서 위 링크를 열면 오래된 "기본 모바일" 화면(하단에 "©2010 Google"이 보이는 화면)이 뜰 수 있어요. 이 화면에는 파일 업로드 메뉴가 없어요. 화면 맨 아래 <b>"데스크톱"</b> 링크를 눌러 최신 화면으로 바꾸면 설정(⚙️) → 가져오기/내보내기 메뉴가 나타나요. 그래도 안 보이면 PC(컴퓨터)로 접속해서 가져오는 걸 추천해요. 폰만 쓰고 있다면 파일 업로드 대신, 캘린더 추가 목록에서 항목 옆 "바로 열기"로 하나씩 등록하는 방법이 더 쉬워요.</p>
+      </div>
+
+      <div class="card">
+        <span class="method-badge backup">보조 · 이 화면을 열어둔 동안에만 작동</span>
+        <p class="method-desc">앱 화면을 보고 있는 동안에만 뜨는 팝업이에요. 폰이 잠기거나 다른 화면으로 넘어가면 브라우저 특성상(모든 웹앱 공통 제약) 이 알림은 늦게 뜨거나 아예 울리지 않을 수 있어요. 그래서 위 캘린더 등록을 기본으로 쓰고, 이건 앱을 보고 있을 때의 보조 알림으로만 생각해 주세요.</p>
         <button class="row-btn" id="notifPermBtn" type="button">이 브라우저에서 알림 권한 요청</button>
         <div class="status-line" id="notifStatus"></div>
         <button class="row-btn" id="reminderPreviewBtn" type="button">지금 알림 팝업 미리보기</button>
-        <p class="hint">이 화면(탭)을 열어 둔 동안에는 위 팝업이 정확히 떠요. 하지만 폰이 잠겨 있거나 앱이 완전히 꺼져 있을 땐 웹 알림은 어떤 웹앱이든 신뢰할 수 없어요(브라우저 자체의 제약). 그럴 때도 정확히 울리게 하려면 아래 버튼으로 폰 기본 캘린더 앱에 반복 알림 일정을 등록하세요.</p>
-        <button class="row-btn" id="gcalManualBtn" type="button">📅 근무일정 구글캘린더 반영 파일 생성/다운로드</button>
-        <a class="row-btn" href="https://calendar.google.com" target="_blank" rel="noopener">🔗 구글캘린더 웹으로 이동 (calendar.google.com)</a>
-        <p class="hint">폰에서 위 링크를 열면 오래된 "기본 모바일" 화면(하단에 "©2010 Google"이 보이는 화면)이 뜰 수 있어요. 이 화면에는 파일 업로드 메뉴가 없어요. 화면 맨 아래 <b>"데스크톱"</b> 링크를 눌러 최신 화면으로 바꾸면 설정(⚙️) → 가져오기/내보내기 메뉴가 나타나요. 그래도 안 보이면 PC(컴퓨터)로 접속해서 가져오는 걸 추천해요. 폰만 쓰고 있다면 파일 업로드 대신, 캘린더 추가 목록에서 항목 옆 "바로 열기"로 하나씩 등록하는 방법이 더 쉬워요.</p>
       </div>
 
       <div class="section-title"><h2>데이터</h2></div>
@@ -747,6 +761,19 @@
       </div>
     </div>
   </div>
+
+  <div class="modal-overlay" id="updateNoticeModal" hidden>
+    <div class="modal-card">
+      <div class="modal-icon">🔔</div>
+      <h3 class="modal-title">알림이 10분 더 일찍 뜨던 문제, 고쳤어요</h3>
+      <p class="modal-body">캘린더에 등록한 알림이 설정한 시각보다 10분 더 일찍(예: 10분 전 알림인데 20분 전에) 뜨던 문제를 고쳤어요. <b>이미 구글캘린더(또는 폰 캘린더)에 알림을 등록해두셨다면</b>, 기존 일정은 자동으로 고쳐지지 않으니 아래 버튼으로 다시 등록해 주세요.</p>
+      <p class="modal-body" style="margin-top:10px;font-size:0.82rem;color:var(--ink-faint);">순서: ① 구글캘린더에서 "체크 알림" 검색 → 기존 일정 삭제 (반복 일정은 "모든 일정" 선택) ② 아래 버튼으로 새 캘린더 파일을 다시 받아 가져오기. 아직 캘린더 알림을 등록한 적이 없다면 그냥 아래 버튼으로 처음 등록하시면 돼요.</p>
+      <div class="modal-actions">
+        <button class="modal-btn secondary" id="updateNoticeLaterBtn" type="button">나중에</button>
+        <button class="modal-btn" id="updateNoticeFixBtn" type="button">지금 다시 등록하기</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -797,8 +824,11 @@
     exceptions: {},
     stamps: {},
     settings: { reminderOffsetMin: 10 },
-    meta: { firstUseDate: null } // 채워지는 시점: 최초 로드 시 오늘 날짜로 고정
+    meta: { firstUseDate: null, gcalPrompted: false, gcalDone: false, lastSeenNotice: null } // 채워지는 시점: 최초 로드 시 오늘 날짜로 고정
   };
+  // 앱을 고칠 때마다 이 값을 새로 바꾸면, 이미 쓰고 있던 사람들에게도 다음 실행 시
+  // 안내 팝업이 한 번 뜨게 할 수 있어요(같은 값이면 다시 안 떠요).
+  var CURRENT_NOTICE = "2026-09-03-alarm-fix";
 
   function pad2(n){ return (n<10?"0":"")+n; }
   function dateStr(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
@@ -822,6 +852,9 @@
           parsed.settings = parsed.settings || {reminderOffsetMin:10};
           parsed.meta = parsed.meta || {};
           if(!parsed.meta.firstUseDate) parsed.meta.firstUseDate = todayStr();
+          if(typeof parsed.meta.gcalPrompted === "undefined") parsed.meta.gcalPrompted = false;
+          if(typeof parsed.meta.gcalDone === "undefined") parsed.meta.gcalDone = false;
+          if(typeof parsed.meta.lastSeenNotice === "undefined") parsed.meta.lastSeenNotice = null;
           return parsed;
         }
       }
@@ -1077,6 +1110,12 @@
       row.querySelector('[data-role="on"]').addEventListener("change", function(ev){
         state.pattern[wd].on = ev.target.checked;
         cleanupExceptionsMatchingPattern();
+        // 근무 요일을 처음 켜는 시점에 한 번, 폰이 잠겨 있어도 확실히 울리는 캘린더 알림
+        // 등록을 제안해요(이미 등록했거나 이미 한 번 물어봤으면 다시 묻지 않아요).
+        if(ev.target.checked && !state.meta.gcalDone && !state.meta.gcalPrompted){
+          state.meta.gcalPrompted = true;
+          promptGcalSync();
+        }
         save(); renderPattern(); renderExceptions(); renderToday(); renderMonth(); renderNext(); renderWeek();
       });
       row.querySelector('[data-role="start"]').addEventListener("change", function(ev){
@@ -1567,6 +1606,17 @@
       if(it.exdates && it.exdates.length) lines.push("EXDATE;TZID=Asia/Seoul:"+it.exdates.join(","));
       lines.push("SUMMARY:"+icsEscape(it.title));
       lines.push("DESCRIPTION:"+icsEscape(it.details));
+      // 이 일정의 DTSTART는 이미 "기준 시각 - 알림 오프셋"으로 계산된 알림 시각이에요.
+      // 그런데 알람(VALARM)을 따로 안 넣으면, 구글캘린더 등에서 그 캘린더의 "기본 알림"
+      // 설정(대개 일정 시작 10분 전)을 이 일정에도 자동으로 추가로 붙여버려서,
+      // 우리가 계산한 알림 시각보다 또 10분 더 일찍 팝업이 뜨는 문제(오프셋이 두 번 겹침)가
+      // 생겨요. 그래서 "일정 시작 시각(=이미 계산된 알림 시각)에 정확히" 울리는 알람을
+      // 명시적으로 넣어서, 캘린더 앱이 자기 기본 알림을 덧붙이지 않고 이 알람만 쓰게 해요.
+      lines.push("BEGIN:VALARM");
+      lines.push("ACTION:DISPLAY");
+      lines.push("DESCRIPTION:"+icsEscape(it.title));
+      lines.push("TRIGGER:PT0M");
+      lines.push("END:VALARM");
       lines.push("END:VEVENT");
     });
     lines.push("END:VCALENDAR");
@@ -1736,6 +1786,8 @@
       return;
     }
     downloadIcsFile(selected);
+    state.meta.gcalDone = true;
+    save();
   });
 
   document.getElementById("gcalCloseBtn").addEventListener("click", function(){ gcalListModal.hidden = true; });
@@ -1758,7 +1810,29 @@
     renderOffset(); renderNotifStatus();
   }
   renderAll();
+
+  // ---------- 업데이트 안내 팝업 ----------
+  // CURRENT_NOTICE 값이 마지막으로 본 값과 다르면(=처음 켜보거나, 새 안내가 나온 뒤 처음
+  // 켰을 때) 앱을 여는 즉시 강제로 안내 팝업을 띄워요. 확인 버튼을 눌러야만 닫히고,
+  // 그래야 이미 쓰고 있던 사람도 이번 수정 사항을 놓치지 않아요.
+  var updateNoticeModal = document.getElementById("updateNoticeModal");
+  function closeUpdateNotice(){
+    state.meta.lastSeenNotice = CURRENT_NOTICE;
+    save();
+    updateNoticeModal.hidden = true;
+  }
+  document.getElementById("updateNoticeLaterBtn").addEventListener("click", closeUpdateNotice);
+  document.getElementById("updateNoticeFixBtn").addEventListener("click", function(){
+    closeUpdateNotice();
+    var settingsTabBtn = document.querySelector('nav.tabbar button[data-tab="settings"]');
+    if(settingsTabBtn) settingsTabBtn.click();
+    promptGcalSync();
+  });
+  if(state.meta.lastSeenNotice !== CURRENT_NOTICE){
+    updateNoticeModal.hidden = false;
+  }
 })();
 </script>
+
 </body>
 </html>
