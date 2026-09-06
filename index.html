@@ -746,13 +746,13 @@
   <div class="modal-overlay" id="gcalListModal" hidden>
     <div class="modal-card gcal-list-card">
       <h3 class="modal-title">캘린더에 추가</h3>
-      <p class="modal-body">등록할 알림을 체크한 뒤, 캘린더 파일 하나로 한 번에 내려받으세요. 구글캘린더 웹(PC)의 <b>설정(⚙️) → 가져오기/내보내기 → 가져오기</b>에서 그 파일 하나만 올리면 체크한 알림이 전부 한 번에 등록돼요. (폰 브라우저에서는 이 메뉴가 안 보일 수 있어요 — 화면 맨 아래 "데스크톱" 링크를 눌러보세요. 그래도 안 보이면 항목 옆 "바로 열기"를 눌러 하나씩 등록하세요.)</p>
+      <p class="modal-body">등록할 알림을 체크한 뒤, 캘린더 파일 하나로 한 번에 내려받으세요. 구글캘린더 웹(PC)의 <b>설정(⚙️) → 가져오기/내보내기 → 가져오기</b>에서 그 파일 하나만 올리면 체크한 알림이 전부 한 번에 등록돼요. 출근·퇴근 알림은 달력이 복잡해지지 않도록 하루에 <b>"⏰" 일정 1개</b>로 합쳐져 있고, 그 안에 출근·퇴근 알림이 각자 시각에 따로 울려요. (폰 브라우저에서는 이 메뉴가 안 보일 수 있어요 — 화면 맨 아래 "데스크톱" 링크를 눌러보세요. 그래도 안 보이면 항목 옆 "바로 열기"를 눌러 하나씩 등록하세요 — 다만 "바로 열기"는 알림이 출근 시각 기준 1번만 걸릴 수 있어요, 출근·퇴근 둘 다 정확히 받으려면 아래 파일 다운로드 방식을 이용하세요.)</p>
       <div class="gcal-toolbar">
         <span class="gcal-count" id="gcalCount"></span>
         <button type="button" id="gcalToggleAllBtn">전체 선택/해제</button>
       </div>
       <div class="gcal-list" id="gcalList"></div>
-      <p class="gcal-download-hint">⚠️ 이전에 이미 이 파일(또는 예전 버전)을 구글캘린더에 가져오기 한 적이 있다면, 다시 가져오기 전에 구글캘린더에서 기존 "○○ 체크 알림" 일정들을 먼저 지워주세요. 안 그러면 같은 알림이 중복으로 등록될 수 있어요.</p>
+      <p class="gcal-download-hint">⚠️ 이전에 이미 이 파일(또는 예전 버전)을 구글캘린더에 가져오기 한 적이 있다면, 다시 가져오기 전에 구글캘린더 검색(🔍)에서 <b>"체크 알림"</b>과 <b>"OnOffMate"</b>를 각각 검색해서 나오는 기존 일정을 먼저 지워주세요(예전 버전엔 "체크 알림"이, 최신 버전엔 "OnOffMate"가 설명에 들어있어요). 안 그러면 같은 알림이 중복으로 등록될 수 있어요. (출근·퇴근이 각각 따로 있던 예전 버전을 가져온 적이 있다면, 이번에 하루 1건("⏰")으로 새로 합쳐졌으니 꼭 기존 것부터 지우고 새로 받아주세요.)</p>
       <p class="gcal-download-hint" id="gcalEmptyHint" hidden>등록할 근무 일정이 없어요. 먼저 근무 패턴을 켜주세요.</p>
       <p class="gcal-download-hint" id="gcalDownloadMsg" hidden></p>
       <div class="modal-actions">
@@ -765,9 +765,9 @@
   <div class="modal-overlay" id="updateNoticeModal" hidden>
     <div class="modal-card">
       <div class="modal-icon">🔔</div>
-      <h3 class="modal-title">알림이 10분 더 일찍 뜨던 문제, 고쳤어요</h3>
-      <p class="modal-body">캘린더에 등록한 알림이 설정한 시각보다 10분 더 일찍(예: 10분 전 알림인데 20분 전에) 뜨던 문제를 고쳤어요. <b>이미 구글캘린더(또는 폰 캘린더)에 알림을 등록해두셨다면</b>, 기존 일정은 자동으로 고쳐지지 않으니 아래 버튼으로 다시 등록해 주세요.</p>
-      <p class="modal-body" style="margin-top:10px;font-size:0.82rem;color:var(--ink-faint);">순서: ① 구글캘린더에서 "체크 알림" 검색 → 기존 일정 삭제 (반복 일정은 "모든 일정" 선택) ② 아래 버튼으로 새 캘린더 파일을 다시 받아 가져오기. 아직 캘린더 알림을 등록한 적이 없다면 그냥 아래 버튼으로 처음 등록하시면 돼요.</p>
+      <h3 class="modal-title">캘린더 알림, 훨씬 깔끔해졌어요</h3>
+      <p class="modal-body">출근·퇴근 알림이 캘린더에 각각 따로 등록되어 다른 일정과 뒤섞여 복잡해 보이던 문제를 고쳤어요. 이제 하루에 <b>"⏰" 일정 1개</b>로 합쳐지고, 그 안에서 출근·퇴근 알림이 각자 시각에 그대로 울려요. (지난 업데이트로 알림이 10분 더 일찍 뜨던 문제도 이미 고쳤어요.) <b>이미 구글캘린더(또는 폰 캘린더)에 알림을 등록해두셨다면</b>, 기존 일정은 자동으로 고쳐지지 않으니 아래 버튼으로 다시 등록해 주세요.</p>
+      <p class="modal-body" style="margin-top:10px;font-size:0.82rem;color:var(--ink-faint);">순서: ① 구글캘린더에서 "체크 알림" 검색 → 기존 일정 전부 삭제 (반복 일정은 "모든 일정" 선택) ② 아래 버튼으로 새 캘린더 파일을 다시 받아 가져오기. 아직 캘린더 알림을 등록한 적이 없다면 그냥 아래 버튼으로 처음 등록하시면 돼요.</p>
       <div class="modal-actions">
         <button class="modal-btn secondary" id="updateNoticeLaterBtn" type="button">나중에</button>
         <button class="modal-btn" id="updateNoticeFixBtn" type="button">지금 다시 등록하기</button>
@@ -828,7 +828,7 @@
   };
   // 앱을 고칠 때마다 이 값을 새로 바꾸면, 이미 쓰고 있던 사람들에게도 다음 실행 시
   // 안내 팝업이 한 번 뜨게 할 수 있어요(같은 값이면 다시 안 떠요).
-  var CURRENT_NOTICE = "2026-09-03-alarm-fix";
+  var CURRENT_NOTICE = "2026-09-06-compact-merge";
 
   function pad2(n){ return (n<10?"0":"")+n; }
   function dateStr(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
@@ -1525,7 +1525,6 @@
 
   // ---------- Google Calendar sync ----------
   var GCAL_WD = {sun:"SU",mon:"MO",tue:"TU",wed:"WE",thu:"TH",fri:"FR",sat:"SA"};
-  function gcalLabelSlug(label){ return label === "출근" ? "checkin" : "checkout"; }
   function addMinutesToHHMM(hhmm, deltaMin){
     var mins = ((minutesOf(hhmm) + deltaMin) % 1440 + 1440) % 1440;
     return { h: Math.floor(mins/60), m: mins % 60 };
@@ -1606,17 +1605,22 @@
       if(it.exdates && it.exdates.length) lines.push("EXDATE;TZID=Asia/Seoul:"+it.exdates.join(","));
       lines.push("SUMMARY:"+icsEscape(it.title));
       lines.push("DESCRIPTION:"+icsEscape(it.details));
-      // 이 일정의 DTSTART는 이미 "기준 시각 - 알림 오프셋"으로 계산된 알림 시각이에요.
-      // 그런데 알람(VALARM)을 따로 안 넣으면, 구글캘린더 등에서 그 캘린더의 "기본 알림"
-      // 설정(대개 일정 시작 10분 전)을 이 일정에도 자동으로 추가로 붙여버려서,
-      // 우리가 계산한 알림 시각보다 또 10분 더 일찍 팝업이 뜨는 문제(오프셋이 두 번 겹침)가
-      // 생겨요. 그래서 "일정 시작 시각(=이미 계산된 알림 시각)에 정확히" 울리는 알람을
-      // 명시적으로 넣어서, 캘린더 앱이 자기 기본 알림을 덧붙이지 않고 이 알람만 쓰게 해요.
-      lines.push("BEGIN:VALARM");
-      lines.push("ACTION:DISPLAY");
-      lines.push("DESCRIPTION:"+icsEscape(it.title));
-      lines.push("TRIGGER:PT0M");
-      lines.push("END:VALARM");
+      // 이 일정의 DTSTART(및 각 알람의 TRIGGER)는 이미 "기준 시각 - 알림 오프셋"으로
+      // 계산된 알림 시각이에요. 그런데 알람(VALARM)을 따로 안 넣으면, 구글캘린더 등에서
+      // 그 캘린더의 "기본 알림" 설정(대개 일정 시작 10분 전)을 이 일정에도 자동으로
+      // 추가로 붙여버려서, 우리가 계산한 알림 시각보다 또 일찍 팝업이 뜨는 문제(오프셋이
+      // 두 번 겹침)가 생겨요. 그래서 원하는 시각에 정확히 울리는 알람을 명시적으로 넣어서,
+      // 캘린더 앱이 자기 기본 알림을 덧붙이지 않고 이 알람들만 쓰게 해요. 출근·퇴근을
+      // 일정 1건으로 합친 경우에는 알람을 2개(출근용 · 퇴근용) 넣어서, 일정은 하나만
+      // 차지하면서도 알림은 각자 시각에 따로 울리게 해요.
+      var alarms = (it.alarms && it.alarms.length) ? it.alarms : [{ trigger:"PT0M", desc: it.title }];
+      alarms.forEach(function(al){
+        lines.push("BEGIN:VALARM");
+        lines.push("ACTION:DISPLAY");
+        lines.push("DESCRIPTION:"+icsEscape(al.desc || it.title));
+        lines.push("TRIGGER:"+al.trigger);
+        lines.push("END:VALARM");
+      });
       lines.push("END:VEVENT");
     });
     lines.push("END:VCALENDAR");
@@ -1636,83 +1640,109 @@
     setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
   }
 
+  // 알람(VALARM)의 TRIGGER 값은 "일정 시작(DTSTART) 기준 몇 시간/몇 분 뒤"를 나타내는
+  // ISO8601 기간(duration) 문자열이에요. 예: 9시간 50분 뒤 = "PT9H50M".
+  function durationToken(totalMin){
+    if(totalMin <= 0) return "PT0M";
+    var h = Math.floor(totalMin/60), m = totalMin%60;
+    var s = "PT";
+    if(h>0) s += h+"H";
+    if(m>0) s += m+"M";
+    return s === "PT" ? "PT0M" : s;
+  }
   function buildGcalPlan(){
     var offset = state.settings.reminderOffsetMin;
     var items = [];
     var t = todayStr();
-    var inGroups = {}, outGroups = {};
+    // 출근 알림과 퇴근 알림을 캘린더에 각각 따로 등록하면 하루에 2줄씩 차지해서
+    // 달력이 금방 빽빽해져요. 그래서 "출근시각·퇴근시각 조합이 같은" 요일끼리 묶어
+    // 하루에 일정 1건만 만들고, 그 안에 알람(VALARM)을 2개(출근용/퇴근용) 넣어서
+    // 알림은 그대로 각자 시각에 따로 울리게 해요. (요일마다 시각 조합이 다르면
+    // - 예: 금요일만 반차 - 자동으로 별도 그룹/일정으로 나뉘어요.)
+    var comboGroups = {};
     WD_KEYS.forEach(function(k){
       var p = state.pattern[k];
       if(!p || !p.on) return;
-      (inGroups[p.start] = inGroups[p.start] || []).push(k);
-      (outGroups[p.end] = outGroups[p.end] || []).push(k);
+      var key = p.start+"|"+p.end;
+      (comboGroups[key] = comboGroups[key] || { start:p.start, end:p.end, days:[] }).days.push(k);
     });
-    function pushGroup(groups, label){
-      Object.keys(groups).forEach(function(hhmm){
-        var days = groups[hhmm];
-        var byday = days.map(function(k){ return GCAL_WD[k]; });
-        var alert = addMinutesToHHMM(hhmm, -offset);
-        var anchor = earliestAnchorForDays(days);
-        var wdLabels = days.map(function(k){ return WD_LABEL[k]; }).join("");
-        var title = "⏰ "+label+" 체크 알림";
-        var details = "회사 유연근무 사이트에서 ["+label+"] 버튼을 눌러주세요. (기준 시각 "+hhmm+", "+offset+"분 전 알림)";
-        var url = buildGcalUrl(title, details, anchor, alert.h, alert.m, 10, byday);
-        var y = anchor.getFullYear(), mo = anchor.getMonth()+1, d = anchor.getDate();
-        var endTotal = alert.h*60+alert.m+10;
-        // 예외 일정(휴무 포함)으로 등록된 날짜는 기본 패턴의 매주 반복에서 제외해요 —
-        // 그 날은 대신 아래 "1회성" 예외 일정 쪽 알림(또는 휴무면 알림 없음)이 적용돼요.
-        // 그래야 같은 날에 기본 패턴 알림과 예외 알림이 겹쳐서 두 번 뜨는 걸 막을 수 있어요.
-        var exDates = [];
-        Object.keys(state.exceptions).forEach(function(ds){
-          if(ds < t) return;
-          var wd = WD_KEYS[new Date(ds+"T00:00:00").getDay()];
-          if(days.indexOf(wd) === -1) return;
-          var ed = new Date(ds+"T00:00:00");
-          exDates.push(icsLocalStamp(ed.getFullYear(), ed.getMonth()+1, ed.getDate(), alert.h, alert.m));
-        });
-        items.push({
-          label: label+" 알림 · "+wdLabels+" "+hhmm,
-          sub: "매주 반복 · 알림 "+pad2(alert.h)+":"+pad2(alert.m) + (exDates.length>0 ? " · 예외 "+exDates.length+"일 제외" : ""),
-          url: url,
-          title: title,
-          details: details,
-          dtstart: icsLocalStamp(y, mo, d, alert.h, alert.m),
-          dtend: icsLocalStamp(y, mo, d, Math.floor((endTotal%1440)/60), endTotal%60),
-          rrule: "FREQ=WEEKLY;BYDAY="+byday.join(","),
-          exdates: exDates,
-          uid: "onoffmate-recur-"+gcalLabelSlug(label)+"-"+byday.join("")+"-"+hhmm.replace(":","")
-        });
+
+    Object.keys(comboGroups).forEach(function(key){
+      var g = comboGroups[key];
+      var days = g.days;
+      var byday = days.map(function(k){ return GCAL_WD[k]; });
+      var inAlert = addMinutesToHHMM(g.start, -offset);
+      var outAlert = addMinutesToHHMM(g.end, -offset);
+      var deltaMin = (outAlert.h*60+outAlert.m) - (inAlert.h*60+inAlert.m);
+      if(deltaMin < 0) deltaMin += 1440;
+      var anchor = earliestAnchorForDays(days);
+      var wdLabels = days.map(function(k){ return WD_LABEL[k]; }).join("");
+      // 달력에 매일 여러 줄로 차지하지 않도록, 제목은 이모지 하나만 남겨요.
+      // 구체적인 안내 문구는 DESCRIPTION(일정을 눌렀을 때 보이는 상세 설명)에 담아요.
+      var title = "⏰";
+      var details = "회사 유연근무 사이트에서 출근·퇴근 시각에 각각 [출근]/[퇴근] 버튼을 눌러주세요. (출근 기준 "+g.start+", 퇴근 기준 "+g.end+", 각각 "+offset+"분 전 알림) · OnOffMate 자동 등록";
+      var url = buildGcalUrl(title, details, anchor, inAlert.h, inAlert.m, 10, byday);
+      var y = anchor.getFullYear(), mo = anchor.getMonth()+1, d = anchor.getDate();
+      var endTotal = inAlert.h*60+inAlert.m+10;
+      // 예외 일정(휴무 포함)으로 등록된 날짜는 기본 패턴의 매주 반복에서 제외해요 —
+      // 그 날은 대신 아래 "1회성" 예외 일정 쪽 알림(또는 휴무면 알림 없음)이 적용돼요.
+      // 그래야 같은 날에 기본 패턴 알림과 예외 알림이 겹쳐서 두 번 뜨는 걸 막을 수 있어요.
+      var exDates = [];
+      Object.keys(state.exceptions).forEach(function(ds){
+        if(ds < t) return;
+        var wd = WD_KEYS[new Date(ds+"T00:00:00").getDay()];
+        if(days.indexOf(wd) === -1) return;
+        var ed = new Date(ds+"T00:00:00");
+        exDates.push(icsLocalStamp(ed.getFullYear(), ed.getMonth()+1, ed.getDate(), inAlert.h, inAlert.m));
       });
-    }
-    pushGroup(inGroups, "출근");
-    pushGroup(outGroups, "퇴근");
+      items.push({
+        label: "출·퇴근 알림 · "+wdLabels+" "+g.start+"~"+g.end,
+        sub: "매주 반복 · 출근 "+pad2(inAlert.h)+":"+pad2(inAlert.m)+" · 퇴근 "+pad2(outAlert.h)+":"+pad2(outAlert.m) + (exDates.length>0 ? " · 예외 "+exDates.length+"일 제외" : ""),
+        url: url,
+        title: title,
+        details: details,
+        dtstart: icsLocalStamp(y, mo, d, inAlert.h, inAlert.m),
+        dtend: icsLocalStamp(y, mo, d, Math.floor((endTotal%1440)/60), endTotal%60),
+        rrule: "FREQ=WEEKLY;BYDAY="+byday.join(","),
+        exdates: exDates,
+        uid: "onoffmate-recur2-"+byday.join("")+"-"+g.start.replace(":","")+"-"+g.end.replace(":",""),
+        alarms: [
+          { trigger:"PT0M", desc:"⏰ 출근 체크 시간이에요 ("+g.start+" 기준)" },
+          { trigger:durationToken(deltaMin), desc:"⏰ 퇴근 체크 시간이에요 ("+g.end+" 기준)" }
+        ]
+      });
+    });
 
     Object.keys(state.exceptions).sort().forEach(function(ds){
       if(ds < t) return;
       var e = state.exceptions[ds];
       if(e.off) return;
+      if(!e.start || !e.end) return;
       var d = new Date(ds+"T00:00:00");
       var dateLabel = (d.getMonth()+1)+"월 "+d.getDate()+"일";
-      [["출근", e.start],["퇴근", e.end]].forEach(function(row){
-        var label = row[0], hhmm = row[1];
-        if(!hhmm) return;
-        var alert = addMinutesToHHMM(hhmm, -offset);
-        var title = "⏰ "+dateLabel+" "+label+" 체크 알림"+(e.note?" ("+e.note+")":"");
-        var details = "회사 유연근무 사이트에서 ["+label+"] 버튼을 눌러주세요. (기준 시각 "+hhmm+", "+offset+"분 전 알림)";
-        var url = buildGcalUrl(title, details, d, alert.h, alert.m, 10, null);
-        var y = d.getFullYear(), mo = d.getMonth()+1, dd = d.getDate();
-        var endTotal = alert.h*60+alert.m+10;
-        items.push({
-          label: dateLabel+" "+label+(e.note?" · "+e.note:""),
-          sub: "1회성 · 알림 "+pad2(alert.h)+":"+pad2(alert.m),
-          url: url,
-          title: title,
-          details: details,
-          dtstart: icsLocalStamp(y, mo, dd, alert.h, alert.m),
-          dtend: icsLocalStamp(y, mo, dd, Math.floor((endTotal%1440)/60), endTotal%60),
-          rrule: null,
-          uid: "onoffmate-once-"+ds+"-"+gcalLabelSlug(label)
-        });
+      var inAlert = addMinutesToHHMM(e.start, -offset);
+      var outAlert = addMinutesToHHMM(e.end, -offset);
+      var deltaMin = (outAlert.h*60+outAlert.m) - (inAlert.h*60+inAlert.m);
+      if(deltaMin < 0) deltaMin += 1440;
+      var title = "⏰";
+      var details = "회사 유연근무 사이트에서 출근·퇴근 시각에 각각 [출근]/[퇴근] 버튼을 눌러주세요. (출근 기준 "+e.start+", 퇴근 기준 "+e.end+", 각각 "+offset+"분 전 알림) · OnOffMate 자동 등록"+(e.note?" · "+e.note:"");
+      var url = buildGcalUrl(title, details, d, inAlert.h, inAlert.m, 10, null);
+      var y = d.getFullYear(), mo = d.getMonth()+1, dd = d.getDate();
+      var endTotal = inAlert.h*60+inAlert.m+10;
+      items.push({
+        label: dateLabel+" 출·퇴근"+(e.note?" · "+e.note:""),
+        sub: "1회성 · 출근 "+pad2(inAlert.h)+":"+pad2(inAlert.m)+" · 퇴근 "+pad2(outAlert.h)+":"+pad2(outAlert.m),
+        url: url,
+        title: title,
+        details: details,
+        dtstart: icsLocalStamp(y, mo, dd, inAlert.h, inAlert.m),
+        dtend: icsLocalStamp(y, mo, dd, Math.floor((endTotal%1440)/60), endTotal%60),
+        rrule: null,
+        uid: "onoffmate-once2-"+ds,
+        alarms: [
+          { trigger:"PT0M", desc:"⏰ 출근 체크 시간이에요 ("+e.start+" 기준)" },
+          { trigger:durationToken(deltaMin), desc:"⏰ 퇴근 체크 시간이에요 ("+e.end+" 기준)" }
+        ]
       });
     });
     return items;
