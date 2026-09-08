@@ -782,9 +782,9 @@
   <div class="modal-overlay" id="updateNoticeModal" hidden>
     <div class="modal-card">
       <div class="modal-icon">🔔</div>
-      <h3 class="modal-title">체크 알림, 한 번 더 울리도록 보강했어요</h3>
-      <p class="modal-body">구글캘린더 알림(진동)이 한 번만 울리고 끝나서 놓치기 쉽다는 의견을 반영했어요. 다만 <b>"해제하기 전까지 계속 울리는" 방식은 폰 기본 알람 앱만 쓸 수 있는 특수한 알림이라 캘린더 앱(구글캘린더·아이폰 캘린더)에서는 지원되지 않아요.</b> 대신 확실히 되는 방법으로, 출근·퇴근 각 방향마다 <b>알림을 1번 더 추가</b>해서 — 원래 설정한 "몇 분 전"에 한 번, 실제 기준 시각 정각에 한 번 더 — 두 번씩 울리도록 바꿨어요. <b>이미 캘린더에 알림을 등록해두셨다면</b>, 기존 일정은 자동으로 고쳐지지 않으니 아래 버튼으로 다시 등록해 주세요.</p>
-      <p class="modal-body" style="margin-top:10px;font-size:0.82rem;color:var(--ink-faint);">순서: ① 캘린더에서 "체크 알림" 또는 "OnOffMate" 검색 → 기존 일정 전부 삭제 (반복 일정은 "모든 일정" 선택) ② 아래 버튼으로 새 캘린더 파일을 다시 받아 가져오기. 아직 캘린더 알림을 등록한 적이 없다면 그냥 아래 버튼으로 처음 등록하시면 돼요.</p>
+      <h3 class="modal-title">캘린더 가져오기가 실패하던 문제를 고쳤어요</h3>
+      <p class="modal-body">일부 기기에서 구글캘린더 가져오기 시 <b>"iCal/CSV 파일을 처리할 수 없습니다"</b> 오류로 아예 등록이 안 되는 문제가 있었어요. 원인은 일정 고유 ID(UID)가 기기 구분 없이 항상 같은 값으로 만들어지던 것이었는데, 이번에 <b>기기마다 다른 고유 ID</b>를 쓰도록 고쳤어요. <b>이전에 가져오기를 시도해서 이미 등록된 일정이 있다면</b>, 겹치지 않도록 아래 순서대로 기존 일정을 지운 뒤 새로 받아서 다시 등록해 주세요. 처음 등록하시는 거라면 그냥 아래 버튼을 누르시면 됩니다.</p>
+      <p class="modal-body" style="margin-top:10px;font-size:0.82rem;color:var(--ink-faint);">순서: ① 캘린더에서 "체크 알림" 또는 "OnOffMate" 검색 → 기존 일정 전부 삭제 (반복 일정은 "모든 일정" 선택) ② 아래 버튼으로 새 캘린더 파일을 다시 받아 가져오기.</p>
       <div class="modal-actions">
         <button class="modal-btn secondary" id="updateNoticeLaterBtn" type="button">나중에</button>
         <button class="modal-btn" id="updateNoticeFixBtn" type="button">지금 다시 등록하기</button>
@@ -841,11 +841,21 @@
     exceptions: {},
     stamps: {},
     settings: { reminderOffsetMin: 10 },
-    meta: { firstUseDate: null, gcalPrompted: false, gcalDone: false, lastSeenNotice: null } // 채워지는 시점: 최초 로드 시 오늘 날짜로 고정
+    meta: { firstUseDate: null, gcalPrompted: false, gcalDone: false, lastSeenNotice: null, deviceSalt: null } // 채워지는 시점: 최초 로드 시 오늘 날짜로 고정
   };
   // 앱을 고칠 때마다 이 값을 새로 바꾸면, 이미 쓰고 있던 사람들에게도 다음 실행 시
   // 안내 팝업이 한 번 뜨게 할 수 있어요(같은 값이면 다시 안 떠요).
-  var CURRENT_NOTICE = "2026-09-07-double-pulse";
+  var CURRENT_NOTICE = "2026-09-08-fresh-uid";
+
+  // 캘린더 일정의 UID(고유 ID)에 섞어 넣을, 이 기기(브라우저)만의 임의 값이에요.
+  // 예전엔 "같은 근무 패턴 = 항상 같은 UID"로만 만들었는데, 그러다 보니 테스트하면서
+  // 같은 UID로 여러 번 반복해서 등록·삭제를 하게 됐고, 그 과정에서 구글캘린더 서버 쪽에
+  // 그 UID에 대한 이상 상태가 남아 나중에는 가져오기 자체가 통째로 거부되는 문제가
+  // 있었어요. 기기마다(그리고 한 번 꼬였을 때 다시 초기화하면) 전혀 다른 UID가 나오게
+  // 이 값을 섞어 넣어서, 같은 문제가 다시 생기지 않게 해요.
+  function genDeviceSalt(){
+    return Math.random().toString(36).slice(2,8)+Math.random().toString(36).slice(2,6);
+  }
 
   function pad2(n){ return (n<10?"0":"")+n; }
   function dateStr(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
@@ -872,16 +882,19 @@
           if(typeof parsed.meta.gcalPrompted === "undefined") parsed.meta.gcalPrompted = false;
           if(typeof parsed.meta.gcalDone === "undefined") parsed.meta.gcalDone = false;
           if(typeof parsed.meta.lastSeenNotice === "undefined") parsed.meta.lastSeenNotice = null;
+          if(!parsed.meta.deviceSalt) parsed.meta.deviceSalt = genDeviceSalt();
           return parsed;
         }
       }
     }catch(e){}
     var fresh = JSON.parse(JSON.stringify(DEFAULT_STATE));
     fresh.meta.firstUseDate = todayStr();
+    fresh.meta.deviceSalt = genDeviceSalt();
     return fresh;
   }
   var state = loadState();
   function save(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+  save(); // 방금 loadState()에서 새로 채워졌을 수 있는 값(deviceSalt 등)을 바로 저장해둬요.
   // 예전에 예외로 잔뜩 쌓여있던 일정 중 반복되는 패턴이 있으면, 앱을 열 때마다 한 번씩
   // 기본 패턴으로 정리해요 (아래 autoTunePatternFromExceptions 정의 참고).
   autoTunePatternFromExceptions();
@@ -1770,7 +1783,7 @@
         dtend: icsLocalStamp(y, mo, d, Math.floor((endTotal%1440)/60), endTotal%60),
         rrule: "FREQ=WEEKLY;BYDAY="+byday.join(","),
         exdates: exDates,
-        uid: "onoffmate-recur2-"+byday.join("")+"-"+g.start.replace(":","")+"-"+g.end.replace(":",""),
+        uid: "onoffmate-"+state.meta.deviceSalt+"-recur3-"+byday.join("")+"-"+g.start.replace(":","")+"-"+g.end.replace(":",""),
         alarms: buildDirectionAlarms(minutesOf(g.start), inAlert.h*60+inAlert.m, offset, "출근", g.start)
           .concat(buildDirectionAlarms(minutesOf(g.end), inAlert.h*60+inAlert.m, offset, "퇴근", g.end))
       });
@@ -1801,7 +1814,7 @@
         dtstart: icsLocalStamp(y, mo, dd, inAlert.h, inAlert.m),
         dtend: icsLocalStamp(y, mo, dd, Math.floor((endTotal%1440)/60), endTotal%60),
         rrule: null,
-        uid: "onoffmate-once2-"+ds,
+        uid: "onoffmate-"+state.meta.deviceSalt+"-once3-"+ds,
         alarms: buildDirectionAlarms(minutesOf(e.start), inAlert.h*60+inAlert.m, offset, "출근", e.start)
           .concat(buildDirectionAlarms(minutesOf(e.end), inAlert.h*60+inAlert.m, offset, "퇴근", e.end))
       });
