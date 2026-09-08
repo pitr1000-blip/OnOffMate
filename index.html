@@ -1588,6 +1588,32 @@
   function icsEscape(s){
     return String(s).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\n/g,"\\n");
   }
+  // RFC5545 규격상 캘린더 파일의 한 줄은 75옥텟(바이트, 글자 수 아님)을 넘으면 안 되고,
+  // 넘는 줄은 줄바꿈 후 다음 줄 맨 앞에 공백 1칸을 붙여서 "이어지는 줄"로 표시해야 해요
+  // (이걸 "line folding"이라고 해요). 한글/이모지는 한 글자가 3~4바이트라서, 설명 문구가
+  // 조금만 길어져도 이 75바이트 제한을 쉽게 넘어요. 이 제한을 안 지키면 구글캘린더처럼
+  // 엄격하게 검사하는 가져오기 기능이 파일 전체를 "처리할 수 없음"으로 거부할 수 있어요.
+  // 그래서 매 줄을 만들 때마다 바이트 단위로 안전하게 접어줘요. (멀티바이트 글자 중간이
+  // 잘리지 않도록, 잘라도 되는 위치인지 바이트 단위로 확인해요.)
+  function foldIcsLine(line){
+    var enc = new TextEncoder();
+    var bytes = enc.encode(line);
+    if(bytes.length <= 75) return line;
+    var dec = new TextDecoder();
+    var out = [];
+    var start = 0;
+    var limit = 75;
+    while(start < bytes.length){
+      var end = Math.min(start + limit, bytes.length);
+      while(end > start && end < bytes.length && (bytes[end] & 0xC0) === 0x80){
+        end--;
+      }
+      out.push(dec.decode(bytes.slice(start, end)));
+      start = end;
+      limit = 74; // 이어지는 줄은 맨 앞에 공백 1칸이 붙으므로, 내용은 74옥텟까지만 담아요.
+    }
+    return out.join("\r\n ");
+  }
   function icsLocalStamp(y, mo, d, hh, mi){
     return y+pad2(mo)+pad2(d)+"T"+pad2(hh)+pad2(mi)+"00";
   }
@@ -1641,7 +1667,7 @@
       lines.push("END:VEVENT");
     });
     lines.push("END:VCALENDAR");
-    return lines.join("\r\n");
+    return lines.map(foldIcsLine).join("\r\n") + "\r\n";
   }
   function downloadIcsFile(items){
     var text = buildIcsFile(items);
